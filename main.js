@@ -21,6 +21,11 @@ let appState = {
         { id: "habit_2", title: "Dormir 8 Horas", streak: 3, completedToday: false, history: [true, false, true, true, false] },
         { id: "habit_3", title: "Hacer Ejercicio (30m)", streak: 2, completedToday: true, history: [false, true, false, true, true] }
     ],
+    events: [
+        { id: "evt_1", title: "Clase Física II", date: "2026-07-09", category: "clases", time: "09:00 AM" },
+        { id: "evt_2", title: "Trabajo grupal", date: "2026-07-09", category: "estudios", time: "04:00 PM" },
+        { id: "evt_3", title: "Examen Álgebra", date: "2026-07-15", category: "examenes", time: "10:00 AM" }
+    ],
     wellness: {
         currentMood: "feliz",
         studyHoursThisWeek: 12.5,
@@ -32,6 +37,11 @@ let appState = {
     ],
     activePhoneFilter: null // "exams", "classes", "tasks"
 };
+
+// Variable para el control del mes/semana actual a mostrar en el calendario
+// Por defecto se mostrará Julio 2026 para alinear con el diseño base de pruebas.
+let currentCalendarDate = new Date(2026, 6, 6); // 6 de Julio de 2026 (Lunes)
+
 
 // ==========================================================================
 // CORE INITIALIZATION
@@ -160,6 +170,8 @@ function updateUserInterfaceDetails(user) {
 function initDashboardControllers() {
     setupTabSwitching();
     setupTaskManager();
+    setupEventManager();
+    setupCalendarControllers();
     setupHabitManager();
     setupWellbeingTools();
     setupSyncGoogle();
@@ -238,47 +250,118 @@ function renderAll() {
 }
 
 // ==========================================================================
-// WIDGET: TU SEMANA (CALENDAR)
+// WIDGET: TU SEMANA Y CALENDARIO COMPLETO (DINÁMICO)
 // ==========================================================================
+
+function setupCalendarControllers() {
+    const btnPrevWeek = document.getElementById("btn-prev-week");
+    const btnNextWeek = document.getElementById("btn-next-week");
+    const btnViewMonth = document.getElementById("btn-view-month");
+    const btnViewWeek = document.getElementById("btn-view-week");
+
+    if (btnPrevWeek) {
+        btnPrevWeek.addEventListener("click", () => {
+            currentCalendarDate.setDate(currentCalendarDate.getDate() - 7);
+            renderWeekCalendar();
+        });
+    }
+
+    if (btnNextWeek) {
+        btnNextWeek.addEventListener("click", () => {
+            currentCalendarDate.setDate(currentCalendarDate.getDate() + 7);
+            renderWeekCalendar();
+        });
+    }
+}
 
 function renderWeekCalendar() {
     const datesContainer = document.getElementById("dates-container");
+    const calendarMonthYear = document.getElementById("calendar-month-year");
     if (!datesContainer) return;
 
     datesContainer.innerHTML = "";
     
-    // Creamos la semana actual (Julio 2026 de acuerdo al boceto)
-    const dates = [
-        { dayNum: 6, today: false, highlighted: false },
-        { dayNum: 7, today: false, highlighted: false },
-        { dayNum: 8, today: false, highlighted: false },
-        { dayNum: 9, today: false, highlighted: true, color: 'yellow' }, // El boceto tiene el 9 marcado en amarillo
-        { dayNum: 10, today: false, highlighted: false },
-        { dayNum: 11, today: false, highlighted: false },
-        { dayNum: 12, today: false, highlighted: false }
-    ];
+    // Configurar mes y año en el título
+    const options = { month: 'long', year: 'numeric' };
+    if (calendarMonthYear) {
+        calendarMonthYear.textContent = currentCalendarDate.toLocaleDateString('es-ES', options);
+    }
 
-    dates.forEach(d => {
+    // Obtener el lunes de la semana actual
+    const currentDayOfWeek = currentCalendarDate.getDay();
+    const distanceToMonday = currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1;
+    const startOfWeek = new Date(currentCalendarDate);
+    startOfWeek.setDate(currentCalendarDate.getDate() - distanceToMonday);
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    for (let i = 0; i < 7; i++) {
+        const currentDate = new Date(startOfWeek);
+        currentDate.setDate(startOfWeek.getDate() + i);
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const dayNum = currentDate.getDate();
+
+        // Check if there are events today
+        const eventsToday = appState.events.filter(e => e.date === dateStr);
+        const hasEvents = eventsToday.length > 0;
+        const isToday = dateStr === todayStr;
+
         const span = document.createElement("span");
-        span.className = `date-num ${d.today ? 'today' : ''} ${d.highlighted ? 'highlighted yellow' : ''}`;
-        span.textContent = d.dayNum;
+        span.className = `date-num ${isToday ? 'today' : ''} ${hasEvents ? 'highlighted yellow' : ''}`;
+        span.textContent = dayNum;
         
         span.addEventListener("click", () => {
-            showToast(`Día ${d.dayNum} de Julio seleccionado. Evento: ${d.highlighted ? 'Trabajo grupal' : 'Sin eventos significativos'}.`, "info");
+            showToast(`Día ${dayNum} seleccionado. ${hasEvents ? eventsToday.map(e=>e.title).join(', ') : 'Sin eventos'}.`, "info");
         });
 
         datesContainer.appendChild(span);
-    });
+    }
+
+    // Actualizar leyenda de eventos en "Tu Semana" (solo mostrar los de esta semana)
+    renderWeekEventsLegend(startOfWeek);
 
     // Render del Calendario Completo (Vista Mes)
     renderFullCalendarBoard();
 }
 
+function renderWeekEventsLegend(startOfWeek) {
+    const legendContainer = document.querySelector(".events-legend");
+    if (!legendContainer) return;
+    legendContainer.innerHTML = "";
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+    const weekEvents = appState.events.filter(e => {
+        const evDate = new Date(e.date);
+        return evDate >= startOfWeek && evDate <= endOfWeek;
+    });
+
+    weekEvents.forEach(e => {
+        const tag = document.createElement("div");
+        const colorClass = e.category === "clases" ? "orange" : (e.category === "examenes" ? "red" : "green");
+        tag.className = `event-tag ${colorClass}`;
+        tag.innerHTML = `
+            <span class="tag-color"></span>
+            <div class="tag-info">
+                <h4>${e.title}</h4>
+                <p>${e.category.charAt(0).toUpperCase() + e.category.slice(1)} • ${e.time}</p>
+            </div>
+        `;
+        legendContainer.appendChild(tag);
+    });
+}
+
 function renderFullCalendarBoard() {
     const board = document.getElementById("calendar-board-container");
+    const fullCalendarTitle = document.getElementById("full-calendar-title");
     if (!board) return;
 
     board.innerHTML = "";
+    
+    if (fullCalendarTitle) {
+        fullCalendarTitle.textContent = currentCalendarDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    }
 
     // Días de cabecera L M M J V S D
     const dayHeaders = ["L", "M", "M", "J", "V", "S", "D"];
@@ -289,9 +372,14 @@ function renderFullCalendarBoard() {
         board.appendChild(header);
     });
 
-    // Julio 2026 empieza en Miércoles (1)
-    const startOffset = 2; // Offset de días vacíos (Lunes, Martes vacíos)
-    const totalDays = 31;
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    
+    const startOffset = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
+    const totalDays = lastDayOfMonth.getDate();
+    const todayStr = new Date().toISOString().split('T')[0];
 
     for (let i = 0; i < startOffset; i++) {
         const emptyCell = document.createElement("div");
@@ -300,8 +388,14 @@ function renderFullCalendarBoard() {
     }
 
     for (let day = 1; day <= totalDays; day++) {
+        const currentDate = new Date(year, month, day);
+        // Ajustar la fecha considerando la zona horaria para ISO string
+        currentDate.setMinutes(currentDate.getMinutes() - currentDate.getTimezoneOffset());
+        const dateStr = currentDate.toISOString().split('T')[0];
+        
+        const isToday = dateStr === todayStr;
         const cell = document.createElement("div");
-        cell.className = `cal-cell ${day === 9 ? 'today' : ''}`;
+        cell.className = `cal-cell ${isToday ? 'today' : ''}`;
         
         const dayNumSpan = document.createElement("span");
         dayNumSpan.className = "cell-num";
@@ -312,28 +406,19 @@ function renderFullCalendarBoard() {
         const eventContainer = document.createElement("div");
         eventContainer.className = "cell-events";
 
-        // Agregar eventos estáticos de demostración alineados al boceto
-        if (day === 9) {
-            const ev1 = document.createElement("div");
-            ev1.className = "cell-event-item clases";
-            ev1.textContent = "Clase Física II";
-            
-            const ev2 = document.createElement("div");
-            ev2.className = "cell-event-item estudios";
-            ev2.textContent = "Trabajo grupal";
-            
-            eventContainer.appendChild(ev1);
-            eventContainer.appendChild(ev2);
-        } else if (day === 15) {
-            const ev = document.createElement("div");
-            ev.className = "cell-event-item examenes";
-            ev.textContent = "Examen Álgebra";
-            eventContainer.appendChild(ev);
-        }
+        const eventsToday = appState.events.filter(e => e.date === dateStr);
+        eventsToday.forEach(ev => {
+            const evEl = document.createElement("div");
+            evEl.className = `cell-event-item ${ev.category}`;
+            evEl.textContent = ev.title;
+            eventContainer.appendChild(evEl);
+        });
 
         cell.appendChild(eventContainer);
         cell.addEventListener("click", () => {
-            showToast(`Abrir creador de eventos para el ${day} de Julio 2026`, "info");
+            // Pre-seleccionar la fecha al abrir el modal de evento
+            document.getElementById("event-date").value = dateStr;
+            toggleEventModal(true);
         });
 
         board.appendChild(cell);
@@ -468,6 +553,73 @@ function setupTaskManager() {
         searchTaskInput.addEventListener("input", (e) => {
             const query = e.target.value.toLowerCase();
             renderTasksKanban(query);
+        });
+    }
+}
+
+// ==========================================================================
+// EVENTOS: CALENDARIO MANAGER
+// ==========================================================================
+
+function toggleEventModal(show) {
+    const eventModal = document.getElementById("event-modal");
+    const eventModalOverlay = document.getElementById("event-modal-overlay");
+    if (!eventModal || !eventModalOverlay) return;
+
+    if (show) {
+        eventModal.classList.add("active");
+        eventModalOverlay.classList.add("active");
+    } else {
+        eventModal.classList.remove("active");
+        eventModalOverlay.classList.remove("active");
+    }
+}
+
+function setupEventManager() {
+    const btnAddEvent = document.getElementById("btn-add-event");
+    const btnCloseEventModal = document.getElementById("btn-close-event-modal");
+    const eventModalOverlay = document.getElementById("event-modal-overlay");
+    const btnSaveEvent = document.getElementById("btn-save-event");
+
+    if (btnAddEvent) {
+        btnAddEvent.addEventListener("click", () => {
+            document.getElementById("event-title").value = "";
+            document.getElementById("event-date").value = new Date().toISOString().split('T')[0];
+            toggleEventModal(true);
+        });
+    }
+
+    if (btnCloseEventModal) btnCloseEventModal.addEventListener("click", () => toggleEventModal(false));
+    if (eventModalOverlay) eventModalOverlay.addEventListener("click", () => toggleEventModal(false));
+
+    if (btnSaveEvent) {
+        btnSaveEvent.addEventListener("click", () => {
+            const title = document.getElementById("event-title").value.trim();
+            const category = document.getElementById("event-category").value;
+            const time = document.getElementById("event-time").value;
+            const date = document.getElementById("event-date").value;
+
+            if (!title || !date) {
+                showToast("El título y fecha son obligatorios.", "error");
+                return;
+            }
+
+            const newEvent = {
+                id: `evt_${Date.now()}`,
+                title,
+                category,
+                time,
+                date
+            };
+
+            appState.events.push(newEvent);
+            saveStateToStorage();
+            toggleEventModal(false);
+            
+            // Re-render calendarios para reflejar el nuevo evento
+            renderWeekCalendar();
+            
+            showToast("Evento agregado al calendario.", "success");
         });
     }
 }
