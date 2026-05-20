@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Student Balance Planner - Joseph</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS Estilos -->
+    <link rel="stylesheet" href="./style.css">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- GSAP for Animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Google Identity Services (Google Sign-In) -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body>
+    <!-- BACKGROUND ANIMADO -->
+    <div class="animated-bg">
+        <div class="bubble bubble-1"></div>
+        <div class="bubble bubble-2"></div>
+        <div class="bubble bubble-3"></div>
+    </div>
+
+    <!-- PANTALLA DE AUTENTICACIÓN (LOGIN/REGISTRO) -->
+    <div id="auth-screen" class="auth-container active">
+        <div class="auth-card">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i data-lucide="book-open" class="logo-icon"></i>
+                </div>
+                <h1>Student Balance</h1>
+                <p class="tagline">“Organiza tu tiempo, mejora tu bienestar”</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form-panel" class="form-panel active">
+                <div class="input-group">
+                    <label for="login-email"><i data-lucide="mail"></i> Correo Universitario</label>
+                    <input type="email" id="login-email" placeholder="ejemplo@universidad.edu" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password"><i data-lucide="lock"></i> Contraseña</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                
+                <button id="btn-login-local" class="btn-primary">
+                    <span>Iniciar Sesión</span>
+                    <i data-lucide="arrow-right"></i>
+                </button>
+
+                <div class="divider">
+                    <span>o</span>
+                </div>
+
+                <!-- Google Sign-In Button Container -->
+                <div class="google-auth-wrapper">
+                    <div id="google-signin-btn"></div>
+                </div>
+
+                <p class="auth-switch">¿No tienes cuenta? <span id="switch-to-signup">Regístrate aquí</span></p>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signup-form-panel" class="form-panel">
+                <div class="input-group">
+                    <label for="signup-name"><i data-lucide="user"></i> Nombre Completo</label>
+                    <input type="text" id="signup-name" placeholder="Tu nombre" required>
+                </div>
+                <div class="input-group">
+                    <label for="signup-email"><i data-lucide="mail"></i> Correo Universitario</label>
+                    <input type="email" id="signup-email" placeholder="ejemplo@universidad.edu" required>
+                </div>
+                <div class="input-group">
+                    <label for="signup-password"><i data-lucide="lock"></i> Contraseña</label>
+                    <input type="password" id="signup-password" placeholder="Crear contraseña" required>
+                </div>
+                
+                <button id="btn-signup-local" class="btn-primary">
+                    <span>Crear Cuenta</span>
+                    <i data-lucide="user-plus"></i>
+                </button>
+
+                <p class="auth-switch">¿Ya tienes cuenta? <span id="switch-to-login">Inicia sesión</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL (DASHBOARD TABLET/DESKTOP + INTERACTIVIDAD MÓVIL) -->
+    <div id="app-screen" class="app-layout">
+        
+        <!-- SIDEBAR DE NAVEGACIÓN (Diseño de la Laptop del Boceto) -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">S</div>
+                <div class="brand-info">
+                    <h2>Student</h2>
+                    <span class="brand-sub">BALANCE PLANNER</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-link active" data-tab="inicio">
+                    <i data-lucide="home"></i> <span>Inicio</span>
+                </a>
+                <a href="#" class="nav-link" data-tab="calendario">
+                    <i data-lucide="calendar"></i> <span>Calendario</span>
+                </a>
+                <a href="#" class="nav-link" data-tab="tareas">
+                    <i data-lucide="check-square"></i> <span>Tareas</span>
+                </a>
+                <a href="#" class="nav-link" data-tab="habitos">
+                    <i data-lucide="heart"></i> <span>Hábitos</span>
+                </a>
+                <a href="#" class="nav-link" data-tab="bienestar">
+                    <i data-lucide="smile"></i> <span>Bienestar</span>
+                </a>
+                <a href="#" class="nav-link" data-tab="estadisticas">
+                    <i data-lucide="bar-chart-2"></i> <span>Estadísticas</span>
+                </a>
+                <a href="#" class="nav-link" data-tab="ajustes">
+                    <i data-lucide="settings"></i> <span>Ajustes</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-pill">
+                    <img id="user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="Perfil">
+                    <div class="user-info">
+                        <h4 id="user-fullname">Camila</h4>
+                        <p id="user-email">camila@uni.edu</p>
+                    </div>
+                </div>
+                <button id="btn-logout" class="btn-logout" title="Cerrar Sesión">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENEDOR PRINCIPAL DE CONTENIDOS -->
+        <main class="main-content">
+            
+            <!-- HEADER DE APLICACIÓN -->
+            <header class="app-header">
+                <div class="header-greeting">
+                    <h1 id="header-welcome-message">¡Vamos por un gran día, Camila!</h1>
+                    <p class="subtitle">Organización hoy</p>
+                </div>
+                <div class="header-actions">
+                    <div class="notif-bell" style="position: relative; cursor: pointer;">
+                        <i data-lucide="bell" id="bell-icon"></i>
+                        <span class="bell-badge" id="notif-badge">2</span>
+                        <div class="notifications-dropdown" id="notif-dropdown">
+                            <div class="dropdown-header">Notificaciones</div>
+                            <div class="dropdown-item">
+                                <span class="notif-dot blue"></span>
+                                <div>
+                                    <p>¡Clase de Matemáticas empieza en 15 min!</p>
+                                    <small>Hace 5 min</small>
+                                </div>
+                            </div>
+                            <div class="dropdown-item">
+                                <span class="notif-dot orange"></span>
+                                <div>
+                                    <p>Examen de Programación próximo: 6 días</p>
+                                    <small>Hace 1 hora</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="theme-toggle" id="btn-toggle-theme">
+                        <i data-lucide="sun" class="sun-icon"></i>
+                        <i data-lucide="moon" class="moon-icon" style="display: none;"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- TABS DE NAVEGACIÓN -->
+            <div class="tab-container">
+
+                <!-- TAB: INICIO (Dashboard exacto al boceto de Laptop) -->
+                <section id="tab-inicio" class="tab-panel active">
+                    <div class="dashboard-grid">
+                        
+                        <!-- Panel 1: Tu Semana (Calendario interactivo rápido) -->
+                        <div class="widget-card widget-semana">
+                            <div class="widget-header">
+                                <h3>Tu semana</h3>
+                                <div class="calendar-nav">
+                                    <button class="cal-arrow" id="btn-prev-week"><i data-lucide="chevron-left"></i></button>
+                                    <span id="calendar-month-year">Julio 2026</span>
+                                    <button class="cal-arrow" id="btn-next-week"><i data-lucide="chevron-right"></i></button>
+                                </div>
+                            </div>
+                            
+                            <div class="week-calendar-widget">
+                                <div class="week-days-row">
+                                    <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                                </div>
+                                <div class="week-dates-row" id="dates-container">
+                                    <!-- Generado dinámicamente con JS -->
+                                    <span class="date-num">6</span>
+                                    <span class="date-num">7</span>
+                                    <span class="date-num">8</span>
+                                    <span class="date-num highlighted yellow">9</span>
+                                    <span class="date-num">10</span>
+                                    <span class="date-num">11</span>
+                                    <span class="date-num">12</span>
+                                </div>
+                            </div>
+
+                            <div class="events-legend">
+                                <div class="event-tag orange">
+                                    <span class="tag-color"></span>
+                                    <div class="tag-info">
+                                        <h4>Clase</h4>
+                                        <p>Física II • 09:00 AM</p>
+                                    </div>
+                                </div>
+                                <div class="event-tag green">
+                                    <span class="tag-color"></span>
+                                    <div class="tag-info">
+                                        <h4>Trabajo grupal</h4>
+                                        <p>Proyecto Final • 04:00 PM</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel 2: Progreso Semanal (Progreso radial y barras detalladas) -->
+                        <div class="widget-card widget-progreso">
+                            <h3>Progreso semanal</h3>
+                            
+                            <div class="radial-progress-container">
+                                <svg class="radial-svg" viewBox="0 0 100 100">
+                                    <circle class="radial-bg" cx="50" cy="50" r="40"></circle>
+                                    <circle class="radial-bar" id="weekly-progress-circle" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="55.2"></circle>
+                                </svg>
+                                <div class="radial-value" id="weekly-progress-percentage">78%</div>
+                            </div>
+
+                            <div class="progress-details">
+                                <div class="progress-item blue">
+                                    <div class="item-meta">
+                                        <span>Tareas completadas</span>
+                                        <strong id="progreso-tareas-val">80%</strong>
+                                    </div>
+                                    <div class="progress-bar-track">
+                                        <div class="progress-bar-fill" id="progreso-tareas-fill" style="width: 80%;"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-item purple">
+                                    <div class="item-meta">
+                                        <span>Hábitos cumplidos</span>
+                                        <strong id="progreso-habitos-val">70%</strong>
+                                    </div>
+                                    <div class="progress-bar-track">
+                                        <div class="progress-bar-fill" id="progreso-habitos-fill" style="width: 70%;"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-item green">
+                                    <div class="item-meta">
+                                        <span>Horas de estudio</span>
+                                        <strong id="progreso-horas-val">85%</strong>
+                                    </div>
+                                    <div class="progress-bar-track">
+                                        <div class="progress-bar-fill" id="progreso-horas-fill" style="width: 85%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel 3: Bienestar (Registro de emociones, frases y exámenes) -->
+                        <div class="widget-card widget-bienestar">
+                            <h3>Bienestar</h3>
+                            <p class="wellness-question">¿Cómo te sientes hoy?</p>
+                            
+                            <!-- Emojis del boceto -->
+                            <div class="mood-selector">
+                                <button class="mood-btn" data-mood="muy-feliz" title="Excelente">
+                                    <span class="emoji">😁</span>
+                                </button>
+                                <button class="mood-btn active" data-mood="feliz" title="Bien">
+                                    <span class="emoji">🙂</span>
+                                </button>
+                                <button class="mood-btn" data-mood="neutral" title="Normal">
+                                    <span class="emoji">😐</span>
+                                </button>
+                                <button class="mood-btn" data-mood="triste" title="Estresado">
+                                    <span class="emoji">😟</span>
+                                </button>
+                                <button class="mood-btn" data-mood="muy-triste" title="Agotado">
+                                    <span class="emoji">😭</span>
+                                </button>
+                            </div>
+
+                            <div class="quote-card">
+                                <div class="quote-header">
+                                    <span>Frase del día</span>
+                                    <i data-lucide="heart" class="heart-icon active"></i>
+                                </div>
+                                <p class="quote-text">“La disciplina de hoy es el éxito de mañana”</p>
+                            </div>
+
+                            <div class="exam-countdown-card">
+                                <div class="exam-icon-box">
+                                    <i data-lucide="alert-triangle"></i>
+                                </div>
+                                <div class="exam-info">
+                                    <h4>Examen próximo</h4>
+                                    <p>Álgebra Lineal</p>
+                                </div>
+                                <div class="exam-days" id="exam-days-countdown">
+                                    Faltan 6 días
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- TAB: CALENDARIO -->
+                <section id="tab-calendario" class="tab-panel">
+                    <div class="calendar-layout-full">
+                        <div class="calendar-sidebar-panel">
+                            <button class="btn-primary" id="btn-add-event">
+                                <i data-lucide="plus"></i>
+                                <span>Añadir Evento</span>
+                            </button>
+                            <div class="google-sync-card">
+                                <div class="sync-status">
+                                    <i data-lucide="refresh-cw" class="sync-icon"></i>
+                                    <span>Google Calendar</span>
+                                </div>
+                                <button id="btn-sync-google" class="btn-secondary">Sincronizar ahora</button>
+                                <small class="last-sync">Última sinc: Hace 10m</small>
+                            </div>
+                            <div class="category-filters">
+                                <h4>Categorías</h4>
+                                <label><input type="checkbox" checked data-cat="clases"> <span class="dot-label clases"></span> Clases</label>
+                                <label><input type="checkbox" checked data-cat="examenes"> <span class="dot-label examenes"></span> Exámenes</label>
+                                <label><input type="checkbox" checked data-cat="estudios"> <span class="dot-label estudios"></span> Grupos de Estudio</label>
+                                <label><input type="checkbox" checked data-cat="personales"> <span class="dot-label personales"></span> Personales</label>
+                            </div>
+                        </div>
+                        <div class="calendar-grid-full">
+                            <div class="calendar-full-header">
+                                <h2 id="full-calendar-title">Julio 2026</h2>
+                                <div class="cal-view-switches">
+                                    <button class="active" id="btn-view-month">Mes</button>
+                                    <button id="btn-view-week">Semana</button>
+                                </div>
+                            </div>
+                            <div class="calendar-board" id="calendar-board-container">
+                                <!-- Generado por JS -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: TAREAS -->
+                <section id="tab-tareas" class="tab-panel">
+                    <div class="tareas-layout">
+                        <div class="tareas-header-row">
+                            <h2>Organizador de Tareas</h2>
+                            <div class="filter-search-row">
+                                <input type="text" id="search-task" placeholder="Buscar tarea...">
+                                <button class="btn-primary" id="btn-add-task-desktop">
+                                    <i data-lucide="plus"></i> Nueva Tarea
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="kanban-board">
+                            <!-- Columna: Pendientes -->
+                            <div class="kanban-col" id="col-pending">
+                                <div class="col-title">
+                                    <span class="count-badge red" id="count-pending">3</span> Pendientes
+                                </div>
+                                <div class="task-list-flow" id="list-pending">
+                                    <!-- Tareas dinámicas -->
+                                </div>
+                            </div>
+
+                            <!-- Columna: En Proceso -->
+                            <div class="kanban-col" id="col-progress">
+                                <div class="col-title">
+                                    <span class="count-badge orange" id="count-progress">2</span> En Proceso
+                                </div>
+                                <div class="task-list-flow" id="list-progress">
+                                    <!-- Tareas dinámicas -->
+                                </div>
+                            </div>
+
+                            <!-- Columna: Completadas -->
+                            <div class="kanban-col" id="col-completed">
+                                <div class="col-title">
+                                    <span class="count-badge green" id="count-completed">5</span> Completadas
+                                </div>
+                                <div class="task-list-flow" id="list-completed">
+                                    <!-- Tareas dinámicas -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: HÁBITOS -->
+                <section id="tab-habitos" class="tab-panel">
+                    <div class="habitos-layout">
+                        <div class="habitos-header">
+                            <h2>Seguimiento de Hábitos</h2>
+                            <button class="btn-primary" id="btn-add-habit"><i data-lucide="plus"></i> Crear Hábito</button>
+                        </div>
+                        
+                        <div class="habits-grid" id="habits-container-list">
+                            <!-- Los hábitos se listarán aquí -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: BIENESTAR -->
+                <section id="tab-bienestar" class="tab-panel">
+                    <div class="bienestar-layout">
+                        <div class="wellness-hero">
+                            <h2>Tu Espacio de Autocuidado y Calma</h2>
+                            <p>Equilibra tu rendimiento académico con tu paz mental y salud física.</p>
+                        </div>
+                        
+                        <div class="wellbeing-grid-details">
+                            <!-- Widget: Respiración Guiada -->
+                            <div class="well-box breathing-card">
+                                <h3>Guía de Respiración</h3>
+                                <p>Tómate un minuto para reducir la ansiedad académica.</p>
+                                <div class="breath-circle-container">
+                                    <div class="breath-circle" id="breath-node"></div>
+                                    <span class="breath-instruction" id="breath-label">Presiona Iniciar</span>
+                                </div>
+                                <button class="btn-primary" id="btn-start-breath">Iniciar Sesión</button>
+                            </div>
+
+                            <!-- Widget: Bloqueador de Distracciones (Pomodoro) -->
+                            <div class="well-box pomodoro-card">
+                                <h3>Bloqueador de Distracciones</h3>
+                                <p>Activa el temporizador de concentración profunda.</p>
+                                <div class="pomodoro-timer" id="pomodoro-display">25:00</div>
+                                <div class="pomodoro-controls">
+                                    <button class="btn-primary" id="btn-pomodoro-start"><i data-lucide="play"></i> Concentrar</button>
+                                    <button class="btn-secondary" id="btn-pomodoro-reset"><i data-lucide="refresh-cw"></i> Reset</button>
+                                </div>
+                                <div class="distraction-tips">
+                                    <i data-lucide="shield-alert"></i>
+                                    <span>¡Notificaciones web bloqueadas automáticamente mientras dure la sesión!</span>
+                                </div>
+                            </div>
+
+                            <!-- Widget: Historial Emocional -->
+                            <div class="well-box emotional-history-card">
+                                <h3>Tu Historial Emocional</h3>
+                                <p>Tus registros de humor de los últimos 7 días.</p>
+                                <div class="mood-history-bars" id="mood-history-stats-graph">
+                                    <!-- Gráfico de barras simple -->
+                                    <div class="bar-col">
+                                        <div class="bar-fill green" style="height: 90%;"></div>
+                                        <span>Lun</span>
+                                    </div>
+                                    <div class="bar-col">
+                                        <div class="bar-fill blue" style="height: 70%;"></div>
+                                        <span>Mar</span>
+                                    </div>
+                                    <div class="bar-col">
+                                        <div class="bar-fill orange" style="height: 50%;"></div>
+                                        <span>Mié</span>
+                                    </div>
+                                    <div class="bar-col">
+                                        <div class="bar-fill green" style="height: 80%;"></div>
+                                        <span>Jue</span>
+                                    </div>
+                                    <div class="bar-col">
+                                        <div class="bar-fill red" style="height: 30%;"></div>
+                                        <span>Vie</span>
+                                    </div>
+                                    <div class="bar-col">
+                                        <div class="bar-fill green" style="height: 85%;"></div>
+                                        <span>Sáb</span>
+                                    </div>
+                                    <div class="bar-col">
+                                        <div class="bar-fill green" style="height: 90%;"></div>
+                                        <span>Dom</span>
+                                    </div>
+                                </div>
+                                <div class="mood-insight">
+                                    <i data-lucide="sparkles"></i>
+                                    <span>¡Has tenido un 80% de bienestar esta semana! La disciplina te sienta bien.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: ESTADÍSTICAS -->
+                <section id="tab-estadisticas" class="tab-panel">
+                    <div class="estadisticas-layout">
+                        <h2>Estadísticas de Productividad</h2>
+                        <div class="stats-cards-summary">
+                            <div class="stat-num-card">
+                                <h3>Total Tareas Realizadas</h3>
+                                <div class="stat-number green" id="stat-total-tasks">14</div>
+                                <p>+12% en comparación a la semana anterior</p>
+                            </div>
+                            <div class="stat-num-card">
+                                <h3>Racha de Hábitos Activa</h3>
+                                <div class="stat-number purple" id="stat-streak-habits">5 días</div>
+                                <p>¡Mantén tu consistencia para mejorar!</p>
+                            </div>
+                            <div class="stat-num-card">
+                                <h3>Enfoque en Estudio</h3>
+                                <div class="stat-number blue" id="stat-study-hours">12.5 hrs</div>
+                                <p>Registrado en tus sesiones de Pomodoro</p>
+                            </div>
+                        </div>
+
+                        <div class="stats-charts-row">
+                            <div class="chart-box">
+                                <h3>Distribución de Tiempo</h3>
+                                <div class="chart-placeholder" id="dist-chart">
+                                    <!-- Render de un gráfico SVG estético -->
+                                    <svg viewBox="0 0 200 200" style="width: 180px;">
+                                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="var(--primary-blue)" stroke-width="40" stroke-dasharray="502" stroke-dashoffset="150"></circle>
+                                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="var(--primary-purple)" stroke-width="40" stroke-dasharray="502" stroke-dashoffset="350"></circle>
+                                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="var(--primary-green)" stroke-width="40" stroke-dasharray="502" stroke-dashoffset="450"></circle>
+                                    </svg>
+                                    <div class="chart-legends-vertical">
+                                        <span class="leg blue">Clases (60%)</span>
+                                        <span class="leg purple">Estudio Individual (25%)</span>
+                                        <span class="leg green">Autocuidado (15%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-box">
+                                <h3>Estadísticas Semanales Históricas</h3>
+                                <div class="weekly-history-lines" style="height: 180px; display: flex; align-items: flex-end; gap: 15px; border-bottom: 2px solid var(--border-color); border-left: 2px solid var(--border-color); padding: 10px;">
+                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 40%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S1</div>
+                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 62%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S2</div>
+                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 78%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S3</div>
+                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), var(--glow-blue)); height: 85%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S4</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB: AJUSTES -->
+                <section id="tab-ajustes" class="tab-panel">
+                    <div class="ajustes-layout">
+                        <h2>Configuración y Vinculación Híbrida</h2>
+                        
+                        <div class="ajustes-sections">
+                            <!-- Sección: Sincronización Física -->
+                            <div class="ajustes-card">
+                                <div class="card-icon blue"><i data-lucide="printer"></i></div>
+                                <div class="card-desc">
+                                    <h3>Mi Agenda Física</h3>
+                                    <p>Genera y descarga hojas de planificador estéticas en PDF, optimizadas para imprimir en tamaño A5 o Carta e insertarlas en tu libreta.</p>
+                                </div>
+                                <button class="btn-primary" id="btn-export-pdf-planner">
+                                    <i data-lucide="download"></i> Descargar Planificador Físico
+                                </button>
+                            </div>
+
+                            <!-- Sección: Cuenta vinculada -->
+                            <div class="ajustes-card">
+                                <div class="card-icon purple"><i data-lucide="key"></i></div>
+                                <div class="card-desc">
+                                    <h3>Integraciones de Google</h3>
+                                    <p>Sincronización activa con Google Calendar. Puedes revocar el acceso o configurar alarmas personalizadas.</p>
+                                </div>
+                                <button class="btn-secondary" id="btn-unlink-google-auth">Desvincular Google</button>
+                            </div>
+
+                            <!-- Sección: Datos y Privacidad -->
+                            <div class="ajustes-card">
+                                <div class="card-icon red"><i data-lucide="trash-2"></i></div>
+                                <div class="card-desc">
+                                    <h3>Reiniciar Datos</h3>
+                                    <p>Borrara toda la información local de tus tareas, hábitos e historial de bienestar.</p>
+                                </div>
+                                <button class="btn-danger" id="btn-reset-data">Borrar todo</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- MODAL DE AGREGAR TAREA (Universal) -->
+    <div class="modal-overlay" id="task-modal-overlay"></div>
+    <div class="modal-card" id="task-modal">
+        <div class="modal-header">
+            <h3><i data-lucide="plus-circle"></i> Agregar Nueva Tarea</h3>
+            <button class="btn-close" id="btn-close-task-modal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body">
+            <div class="input-group">
+                <label for="task-title">Título de la Tarea</label>
+                <input type="text" id="task-title" placeholder="Ej. Estudiar Cálculo..." required>
+            </div>
+            <div class="input-group">
+                <label for="task-desc">Descripción (Opcional)</label>
+                <textarea id="task-desc" placeholder="Detalles de la entrega..."></textarea>
+            </div>
+            <div class="modal-row-grid">
+                <div class="input-group">
+                    <label for="task-category">Materia / Categoría</label>
+                    <select id="task-category">
+                        <option value="Física II">Física II</option>
+                        <option value="Álgebra Lineal">Álgebra Lineal</option>
+                        <option value="Programación">Programación</option>
+                        <option value="General">General / Vida Personal</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="task-priority">Prioridad</label>
+                    <select id="task-priority">
+                        <option value="Alta">Alta 🔥</option>
+                        <option value="Media" selected>Media ⚡</option>
+                        <option value="Baja">Baja 💤</option>
+                    </select>
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="task-date">Fecha de Entrega</label>
+                <input type="date" id="task-date" required>
+            </div>
+            <button class="btn-primary full-width" id="btn-save-task">
+                <span>Guardar Tarea</span>
+                <i data-lucide="check"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICACIONES RÁPIDAS -->
+    <div id="toast-message" class="toast-popup">
+        <i data-lucide="check-circle" class="toast-icon"></i>
+        <span id="toast-text">Acción realizada correctamente</span>
+    </div>
+
+    <!-- JS Scripts -->
+    <script src="./auth.js"></script>
+    <script src="./main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,8 @@
+# CONFIGURACIÓN DE CLOUDFLARE PAGES - WRANGLER
+
+name = "student-balance-planner"
+compatibility_date = "2026-05-19"
+
+[site]
+bucket = "./"
+entry-point = "workers-site"
