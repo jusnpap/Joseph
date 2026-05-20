@@ -4,8 +4,8 @@
    ========================================================================== */
 
 // Configuración de tu Google Client ID de Google Cloud Console
-// Reemplaza esto con tu Client ID real cuando sigas los pasos.
-var GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com";
+// Configuración de tu Google Client ID de Google Cloud Console
+var GOOGLE_CLIENT_ID = "1040900213875-67mr6d8bkhifr251jrun6g7smmcbup8r.apps.googleusercontent.com";
 
 // Estado global de la sesión
 var currentUser = null;
