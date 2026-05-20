@@ -66,37 +66,52 @@ function checkExistingSession(onUserLoggedCallback) {
 
 // Inicializar Google Identity Services (Google Sign-In)
 function initGoogleSignIn(onUserLoggedCallback) {
-    if (typeof window.google === "undefined") {
-        console.warn("SDK de Google Identity Services no cargado. Revisa la conexión de red.");
-        return;
-    }
+    if (typeof window.google !== "undefined" && window.google.accounts) {
+        // SDK ya cargado (script sincrono o cargado antes que DOMContentLoaded)
+        _setupRealGoogleButton(onUserLoggedCallback);
+    } else {
+        // El script de Google se carga con async/defer: esperamos su callback oficial
+        window.onGoogleLibraryLoad = function () {
+            _setupRealGoogleButton(onUserLoggedCallback);
+        };
 
+        // Fallback adicional: si por alguna razon onGoogleLibraryLoad no se llama
+        // (bloqueo de red, extension, etc.), mostrar boton propio tras 2.5s
+        setTimeout(() => {
+            const btnContainer = document.getElementById("google-signin-btn");
+            if (btnContainer && btnContainer.children.length === 0) {
+                console.warn("SDK de Google no cargó en tiempo. Mostrando botón de respaldo.");
+                createMockGoogleButton(btnContainer, onUserLoggedCallback);
+            }
+        }, 2500);
+    }
+}
+
+// Configura e inyecta el botón real de Google (solo cuando el SDK está listo)
+function _setupRealGoogleButton(onUserLoggedCallback) {
     try {
         window.google.accounts.id.initialize({
-            client_id: GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID") ? "placeholder" : GOOGLE_CLIENT_ID,
+            client_id: GOOGLE_CLIENT_ID,
             callback: (response) => handleGoogleSignInResponse(response, onUserLoggedCallback),
             auto_select: false
         });
 
-        // Intentar renderizar el botón oficial de Google
         const btnContainer = document.getElementById("google-signin-btn");
         if (btnContainer) {
-            if (GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID")) {
-                // Si el Client ID no está configurado, creamos un botón simulado muy bonito de Google
-                createMockGoogleButton(btnContainer, onUserLoggedCallback);
-            } else {
-                window.google.accounts.id.renderButton(btnContainer, {
-                    theme: "outline",
-                    size: "large",
-                    text: "signin_with",
-                    shape: "rectangular",
-                    logo_alignment: "center",
-                    width: 320
-                });
-            }
+            window.google.accounts.id.renderButton(btnContainer, {
+                theme: "outline",
+                size: "large",
+                text: "signin_with",
+                shape: "rectangular",
+                logo_alignment: "center",
+                width: 320
+            });
         }
     } catch (err) {
         console.error("Error al inicializar Google Sign-In:", err);
+        // Si falla el renderizado, mostrar boton de respaldo
+        const btnContainer = document.getElementById("google-signin-btn");
+        if (btnContainer) createMockGoogleButton(btnContainer, onUserLoggedCallback);
     }
 }
 

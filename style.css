@@ -2264,18 +2264,85 @@ body {
         grid-template-columns: 1fr; /* Stack into single column */
     }
     .sidebar {
-        display: none; /* Hide desktop sidebar */
+        display: none; /* Hide desktop sidebar on mobile */
     }
     
-    /* We can implement mobile bottom navigation wrapper visible on mobile widths */
     .app-layout {
         width: 100vw;
         height: 100vh;
         border-radius: 0;
     }
     .main-content {
-        padding: 20px 20px 80px; /* Space for bottom nav bar */
+        padding: 20px 16px 85px; /* Espacio para la barra de nav inferior */
     }
-    
-    /* Simulate standard responsive mobile style for app tab switching */
+}
+
+/* ==========================================================================
+   MOBILE BOTTOM NAVIGATION BAR
+   ========================================================================== */
+.mobile-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-glass-strong);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border-color);
+    z-index: 9999;
+    display: none; /* JS lo muestra solo en móvil al loguearse */
+    justify-content: space-around;
+    align-items: center;
+    padding: 8px 4px env(safe-area-inset-bottom, 8px);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="dark"] .mobile-bottom-nav {
+    background: rgba(15, 23, 42, 0.92);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 10px;
+    color: var(--text-light);
+    text-decoration: none;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+    transition: color 0.2s ease, background 0.2s ease;
+    min-width: 50px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-nav-item svg {
+    width: 22px;
+    height: 22px;
+    transition: transform 0.2s var(--transition-bounce);
+}
+
+.mobile-nav-item.active {
+    color: var(--primary-color);
+}
+
+.mobile-nav-item.active svg {
+    transform: translateY(-2px);
+}
+
+.mobile-nav-item:active {
+    background: var(--primary-glow);
+    transform: scale(0.93);
+}
+
+/* En pantallas pequeñas mostrar la nav */
+@media (max-width: 900px) {
+    .mobile-bottom-nav {
+        display: flex;
+    }
 }

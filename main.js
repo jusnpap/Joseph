@@ -44,14 +44,19 @@ document.addEventListener("DOMContentLoaded", () => {
 async function onUserSuccess(user) {
     const authScreen = document.getElementById("auth-screen");
     const appScreen = document.getElementById("app-screen");
+    const mobileNav = document.getElementById("mobile-bottom-nav");
 
     // Si GSAP está disponible, animar la salida del login y la entrada del dashboard
     if (typeof gsap !== "undefined" && authScreen.classList.contains("active")) {
         gsap.to(".auth-card", {
             y: -50, opacity: 0, scale: 0.9, duration: 0.5, ease: "power2.in", onComplete: async () => {
                 authScreen.classList.remove("active");
+                // Limpiar estilos inline que GSAP pudo haber dejado del logout anterior
+                gsap.set(appScreen, { clearProps: "all" });
                 appScreen.classList.add("active");
                 appScreen.style.display = "grid";
+                // Mostrar nav móvil solo en pantallas pequeñas
+                if (mobileNav && window.innerWidth <= 768) mobileNav.style.display = "flex";
 
                 // Ejecutar inicialización de dashboard
                 await setupDashboard(user);
@@ -61,8 +66,11 @@ async function onUserSuccess(user) {
     } else {
         // Fallback normal
         authScreen.classList.remove("active");
+        if (typeof gsap !== "undefined") gsap.set(appScreen, { clearProps: "all" });
         appScreen.classList.add("active");
         appScreen.style.display = "grid";
+        // Mostrar nav móvil solo en pantallas pequeñas
+        if (mobileNav && window.innerWidth <= 768) mobileNav.style.display = "flex";
         await setupDashboard(user);
         if (typeof gsap !== "undefined") animateDashboardEntry();
     }
@@ -106,12 +114,19 @@ function animateDashboardEntry() {
 function onUserLoggedOut() {
     const appScreen = document.getElementById("app-screen");
     const authScreen = document.getElementById("auth-screen");
+    const mobileNav = document.getElementById("mobile-bottom-nav");
+
+    // Ocultar nav móvil
+    if (mobileNav) mobileNav.style.display = "none";
 
     if (appScreen && authScreen) {
         if (typeof gsap !== "undefined") {
             gsap.to(appScreen, {
                 opacity: 0, y: 20, duration: 0.4, onComplete: () => {
                     appScreen.classList.remove("active");
+                    appScreen.style.display = "none";
+                    // Limpiar los estilos inline de GSAP para no contaminar el siguiente login
+                    gsap.set(appScreen, { clearProps: "all" });
                     appScreen.style.display = "none";
                     
                     authScreen.classList.add("active");
@@ -212,48 +227,41 @@ function initDashboardControllers() {
 function setupTabSwitching() {
     const navLinks = document.querySelectorAll(".nav-link");
     const tabPanels = document.querySelectorAll(".tab-panel");
+    const mobileNavItems = document.querySelectorAll(".mobile-nav-item");
+
+    // Función central: activa un tab por ID y sincroniza ambas navs
+    function activateTab(tabId) {
+        // Actualizar nav desktop
+        navLinks.forEach(l => l.classList.remove("active"));
+        const desktopLink = document.querySelector(`.nav-link[data-tab="${tabId}"]`);
+        if (desktopLink) desktopLink.classList.add("active");
+
+        // Actualizar nav móvil
+        mobileNavItems.forEach(i => i.classList.remove("active"));
+        const mobileItem = document.querySelector(`.mobile-nav-item[data-tab="${tabId}"]`);
+        if (mobileItem) mobileItem.classList.add("active");
+
+        // Mostrar panel correspondiente
+        tabPanels.forEach(panel => {
+            panel.classList.remove("active");
+            if (panel.id === `tab-${tabId}`) {
+                panel.classList.add("active");
+            }
+        });
+    }
 
     navLinks.forEach(link => {
         link.addEventListener("click", (e) => {
             e.preventDefault();
-            const tabId = link.getAttribute("data-tab");
-
-            // Desactivar todos los links e activar el seleccionado
-            navLinks.forEach(l => l.classList.remove("active"));
-            link.classList.add("active");
-
-            // Mostrar el panel de contenido correspondiente
-            tabPanels.forEach(panel => {
-                panel.classList.remove("active");
-                if (panel.id === `tab-${tabId}`) {
-                    panel.classList.add("add-action"); // Micro-animación
-                    panel.classList.add("active");
-                }
-            });
-
-            // Sincronizar el simulador móvil si el tab existe allí
-            const mobileNavItem = document.querySelector(`.phone-nav-item[data-tab-link="${tabId}"]`);
-            if (mobileNavItem) {
-                document.querySelectorAll(".phone-nav-item").forEach(item => item.classList.remove("active"));
-                mobileNavItem.classList.add("active");
-            }
+            activateTab(link.getAttribute("data-tab"));
         });
     });
 
-    // Cambiar de Pestaña (Simulador Móvil)
-    const phoneNavItems = document.querySelectorAll(".phone-nav-item:not(.add-action)");
-    phoneNavItems.forEach(item => {
-        item.addEventListener("click", () => {
-            const tabId = item.getAttribute("data-tab-link");
-
-            phoneNavItems.forEach(i => i.classList.remove("active"));
-            item.classList.add("active");
-
-            // Sincronizar pestaña de escritorio
-            const desktopNavLink = document.querySelector(`.nav-link[data-tab="${tabId}"]`);
-            if (desktopNavLink) {
-                desktopNavLink.click();
-            }
+    // Nav móvil
+    mobileNavItems.forEach(item => {
+        item.addEventListener("click", (e) => {
+            e.preventDefault();
+            activateTab(item.getAttribute("data-tab"));
         });
     });
 }
