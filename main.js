@@ -121,10 +121,33 @@ function animateDashboardEntry() {
 // Callback: Cerrar Sesión
 function onUserLoggedOut() {
     const appScreen = document.getElementById("app-screen");
-    appScreen.classList.remove("active");
-    appScreen.style.display = "none";
-    
-    document.getElementById("auth-screen").classList.add("active");
+    const authScreen = document.getElementById("auth-screen");
+
+    if (appScreen && authScreen) {
+        if (typeof gsap !== "undefined") {
+            gsap.to(appScreen, {
+                opacity: 0, y: 20, duration: 0.4, onComplete: () => {
+                    appScreen.classList.remove("active");
+                    appScreen.style.display = "none";
+                    
+                    authScreen.classList.add("active");
+                    // Limpiar propiedades y forzar visibilidad para evitar pantalla blanca
+                    gsap.fromTo(".auth-card", 
+                        { scale: 0.9, opacity: 0, y: 0 }, 
+                        { scale: 1, opacity: 1, duration: 0.5, clearProps: "all" }
+                    );
+                    gsap.fromTo(".input-group, .btn-primary, .divider, .google-auth-wrapper, .auth-switch",
+                        { y: 20, opacity: 0 },
+                        { y: 0, opacity: 1, duration: 0.6, stagger: 0.1, ease: "power2.out", delay: 0.2, clearProps: "all" }
+                    );
+                }
+            });
+        } else {
+            appScreen.classList.remove("active");
+            appScreen.style.display = "none";
+            authScreen.classList.add("active");
+        }
+    }
 }
 
 // Cargar datos desde localStorage
