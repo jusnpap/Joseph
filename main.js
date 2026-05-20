@@ -515,6 +515,16 @@ function renderTasksKanban(query = "") {
             </div>
         `;
 
+        // Event listeners para drag & drop
+        card.addEventListener("dragstart", (e) => {
+            e.dataTransfer.setData("text/plain", t.id);
+            card.classList.add("dragging");
+        });
+
+        card.addEventListener("dragend", () => {
+            card.classList.remove("dragging");
+        });
+
         // Event listeners para los botones de acción interna
         card.querySelectorAll(".task-action-btn").forEach(btn => {
             btn.addEventListener("click", (e) => {
@@ -529,6 +539,9 @@ function renderTasksKanban(query = "") {
         if (t.status === "progress") listProgress.appendChild(card);
         if (t.status === "completed") listCompleted.appendChild(card);
     });
+
+    // Configurar columnas como zonas de drop
+    setupKanbanDropZones([listPending, listProgress, listCompleted]);
 
     // Actualizar badges
     document.getElementById("count-pending").textContent = counts.pending;
@@ -553,6 +566,35 @@ function handleTaskAction(id, action) {
 
     saveStateToStorage();
     renderAll();
+}
+
+function setupKanbanDropZones(columns) {
+    columns.forEach(col => {
+        col.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            col.classList.add("drag-over");
+        });
+        
+        col.addEventListener("dragleave", () => {
+            col.classList.remove("drag-over");
+        });
+
+        col.addEventListener("drop", (e) => {
+            e.preventDefault();
+            col.classList.remove("drag-over");
+            
+            const taskId = e.dataTransfer.getData("text/plain");
+            const newStatus = col.id === "list-pending" ? "pending" : (col.id === "list-progress" ? "progress" : "completed");
+            
+            const taskIndex = appState.tasks.findIndex(t => t.id === taskId);
+            if (taskIndex !== -1 && appState.tasks[taskIndex].status !== newStatus) {
+                appState.tasks[taskIndex].status = newStatus;
+                saveStateToStorage();
+                renderAll();
+                showToast(`Tarea movida a ${newStatus === 'pending' ? 'Pendientes' : (newStatus === 'progress' ? 'En Proceso' : 'Completadas')}`, "info");
+            }
+        });
+    });
 }
 
 // ==========================================================================
