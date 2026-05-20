@@ -37,14 +37,6 @@ function setupAuthPanels() {
     const switchToLoginBtn = document.getElementById("switch-to-login");
     const loginPanel = document.getElementById("login-form-panel");
     const signupPanel = document.getElementById("signup-form-panel");
-    
-    // Auto-fill test credentials
-    const loginEmail = document.getElementById("login-email");
-    const loginPassword = document.getElementById("login-password");
-    if (loginEmail && loginPassword) {
-        loginEmail.value = "juan123";
-        loginPassword.value = "123";
-    }
 
     if (switchToSignupBtn && switchToLoginBtn && loginPanel && signupPanel) {
         switchToSignupBtn.addEventListener("click", () => {
