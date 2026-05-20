@@ -3,6 +3,6 @@
 name = "student-balance-planner"
 compatibility_date = "2026-05-19"
 
-[site]
-bucket = "./"
-entry-point = "workers-site"
+# Despliegue moderno de archivos estáticos (Wrangler v3+)
+[assets]
+directory = "./"
