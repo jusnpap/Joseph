@@ -8,7 +8,9 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <!-- CSS Estilos -->
     <link rel="stylesheet" href="./style.css">
     <!-- Lucide Icons -->
@@ -48,7 +50,7 @@
                     <label for="login-password"><i data-lucide="lock"></i> Contraseña</label>
                     <input type="password" id="login-password" placeholder="••••••••" required>
                 </div>
-                
+
                 <button id="btn-login-local" class="btn-primary">
                     <span>Iniciar Sesión</span>
                     <i data-lucide="arrow-right"></i>
@@ -80,7 +82,7 @@
                     <label for="signup-password"><i data-lucide="lock"></i> Contraseña</label>
                     <input type="password" id="signup-password" placeholder="Crear contraseña" required>
                 </div>
-                
+
                 <button id="btn-signup-local" class="btn-primary">
                     <span>Crear Cuenta</span>
                     <i data-lucide="user-plus"></i>
@@ -93,7 +95,7 @@
 
     <!-- APLICACIÓN PRINCIPAL (DASHBOARD TABLET/DESKTOP + INTERACTIVIDAD MÓVIL) -->
     <div id="app-screen" class="app-layout">
-        
+
         <!-- SIDEBAR DE NAVEGACIÓN (Diseño de la Laptop del Boceto) -->
         <aside class="sidebar">
             <div class="sidebar-brand">
@@ -103,7 +105,7 @@
                     <span class="brand-sub">BALANCE PLANNER</span>
                 </div>
             </div>
-            
+
             <nav class="sidebar-nav">
                 <a href="#" class="nav-link active" data-tab="inicio">
                     <i data-lucide="home"></i> <span>Inicio</span>
@@ -130,7 +132,9 @@
 
             <div class="sidebar-footer">
                 <div class="user-pill">
-                    <img id="user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop" alt="Perfil">
+                    <img id="user-avatar"
+                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=256&auto=format&fit=crop"
+                        alt="Perfil">
                     <div class="user-info">
                         <h4 id="user-fullname">Camila</h4>
                         <p id="user-email">camila@uni.edu</p>
@@ -144,7 +148,7 @@
 
         <!-- CONTENEDOR PRINCIPAL DE CONTENIDOS -->
         <main class="main-content">
-            
+
             <!-- HEADER DE APLICACIÓN -->
             <header class="app-header">
                 <div class="header-greeting">
@@ -186,18 +190,20 @@
                 <!-- TAB: INICIO (Dashboard exacto al boceto de Laptop) -->
                 <section id="tab-inicio" class="tab-panel active">
                     <div class="dashboard-grid">
-                        
+
                         <!-- Panel 1: Tu Semana (Calendario interactivo rápido) -->
                         <div class="widget-card widget-semana">
                             <div class="widget-header">
                                 <h3>Tu semana</h3>
                                 <div class="calendar-nav">
-                                    <button class="cal-arrow" id="btn-prev-week"><i data-lucide="chevron-left"></i></button>
+                                    <button class="cal-arrow" id="btn-prev-week"><i
+                                            data-lucide="chevron-left"></i></button>
                                     <span id="calendar-month-year">Julio 2026</span>
-                                    <button class="cal-arrow" id="btn-next-week"><i data-lucide="chevron-right"></i></button>
+                                    <button class="cal-arrow" id="btn-next-week"><i
+                                            data-lucide="chevron-right"></i></button>
                                 </div>
                             </div>
-                            
+
                             <div class="week-calendar-widget">
                                 <div class="week-days-row">
                                     <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
@@ -235,11 +241,12 @@
                         <!-- Panel 2: Progreso Semanal (Progreso radial y barras detalladas) -->
                         <div class="widget-card widget-progreso">
                             <h3>Progreso semanal</h3>
-                            
+
                             <div class="radial-progress-container">
                                 <svg class="radial-svg" viewBox="0 0 100 100">
                                     <circle class="radial-bg" cx="50" cy="50" r="40"></circle>
-                                    <circle class="radial-bar" id="weekly-progress-circle" cx="50" cy="50" r="40" stroke-dasharray="251.2" stroke-dashoffset="55.2"></circle>
+                                    <circle class="radial-bar" id="weekly-progress-circle" cx="50" cy="50" r="40"
+                                        stroke-dasharray="251.2" stroke-dashoffset="55.2"></circle>
                                 </svg>
                                 <div class="radial-value" id="weekly-progress-percentage">78%</div>
                             </div>
@@ -251,7 +258,8 @@
                                         <strong id="progreso-tareas-val">80%</strong>
                                     </div>
                                     <div class="progress-bar-track">
-                                        <div class="progress-bar-fill" id="progreso-tareas-fill" style="width: 80%;"></div>
+                                        <div class="progress-bar-fill" id="progreso-tareas-fill" style="width: 80%;">
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="progress-item purple">
@@ -260,7 +268,8 @@
                                         <strong id="progreso-habitos-val">70%</strong>
                                     </div>
                                     <div class="progress-bar-track">
-                                        <div class="progress-bar-fill" id="progreso-habitos-fill" style="width: 70%;"></div>
+                                        <div class="progress-bar-fill" id="progreso-habitos-fill" style="width: 70%;">
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="progress-item green">
@@ -269,7 +278,8 @@
                                         <strong id="progreso-horas-val">85%</strong>
                                     </div>
                                     <div class="progress-bar-track">
-                                        <div class="progress-bar-fill" id="progreso-horas-fill" style="width: 85%;"></div>
+                                        <div class="progress-bar-fill" id="progreso-horas-fill" style="width: 85%;">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -279,7 +289,7 @@
                         <div class="widget-card widget-bienestar">
                             <h3>Bienestar</h3>
                             <p class="wellness-question">¿Cómo te sientes hoy?</p>
-                            
+
                             <!-- Emojis del boceto -->
                             <div class="mood-selector">
                                 <button class="mood-btn" data-mood="muy-feliz" title="Excelente">
@@ -342,10 +352,14 @@
                             </div>
                             <div class="category-filters">
                                 <h4>Categorías</h4>
-                                <label><input type="checkbox" checked data-cat="clases"> <span class="dot-label clases"></span> Clases</label>
-                                <label><input type="checkbox" checked data-cat="examenes"> <span class="dot-label examenes"></span> Exámenes</label>
-                                <label><input type="checkbox" checked data-cat="estudios"> <span class="dot-label estudios"></span> Grupos de Estudio</label>
-                                <label><input type="checkbox" checked data-cat="personales"> <span class="dot-label personales"></span> Personales</label>
+                                <label><input type="checkbox" checked data-cat="clases"> <span
+                                        class="dot-label clases"></span> Clases</label>
+                                <label><input type="checkbox" checked data-cat="examenes"> <span
+                                        class="dot-label examenes"></span> Exámenes</label>
+                                <label><input type="checkbox" checked data-cat="estudios"> <span
+                                        class="dot-label estudios"></span> Grupos de Estudio</label>
+                                <label><input type="checkbox" checked data-cat="personales"> <span
+                                        class="dot-label personales"></span> Personales</label>
                             </div>
                         </div>
                         <div class="calendar-grid-full">
@@ -375,7 +389,7 @@
                                 </button>
                             </div>
                         </div>
-                        
+
                         <div class="kanban-board">
                             <!-- Columna: Pendientes -->
                             <div class="kanban-col" id="col-pending">
@@ -415,9 +429,10 @@
                     <div class="habitos-layout">
                         <div class="habitos-header">
                             <h2>Seguimiento de Hábitos</h2>
-                            <button class="btn-primary" id="btn-add-habit"><i data-lucide="plus"></i> Crear Hábito</button>
+                            <button class="btn-primary" id="btn-add-habit"><i data-lucide="plus"></i> Crear
+                                Hábito</button>
                         </div>
-                        
+
                         <div class="habits-grid" id="habits-container-list">
                             <!-- Los hábitos se listarán aquí -->
                         </div>
@@ -431,7 +446,7 @@
                             <h2>Tu Espacio de Autocuidado y Calma</h2>
                             <p>Equilibra tu rendimiento académico con tu paz mental y salud física.</p>
                         </div>
-                        
+
                         <div class="wellbeing-grid-details">
                             <!-- Widget: Respiración Guiada -->
                             <div class="well-box breathing-card">
@@ -448,14 +463,29 @@
                             <div class="well-box pomodoro-card">
                                 <h3>Bloqueador de Distracciones</h3>
                                 <p>Activa el temporizador de concentración profunda.</p>
+
+                                <div class="pomodoro-time-selector">
+                                    <label for="pomodoro-duration">Tiempo de sesión:</label>
+                                    <select id="pomodoro-duration">
+                                        <option value="15">15 minutos</option>
+                                        <option value="25" selected>25 minutos (Pomodoro)</option>
+                                        <option value="45">45 minutos</option>
+                                        <option value="60">60 minutos</option>
+                                        <option value="90">90 minutos</option>
+                                    </select>
+                                </div>
+
                                 <div class="pomodoro-timer" id="pomodoro-display">25:00</div>
                                 <div class="pomodoro-controls">
-                                    <button class="btn-primary" id="btn-pomodoro-start"><i data-lucide="play"></i> Concentrar</button>
-                                    <button class="btn-secondary" id="btn-pomodoro-reset"><i data-lucide="refresh-cw"></i> Reset</button>
+                                    <button class="btn-primary" id="btn-pomodoro-start"><i data-lucide="play"></i>
+                                        Concentrar</button>
+                                    <button class="btn-secondary" id="btn-pomodoro-reset"><i
+                                            data-lucide="refresh-cw"></i> Reset</button>
                                 </div>
                                 <div class="distraction-tips">
                                     <i data-lucide="shield-alert"></i>
-                                    <span>¡Notificaciones web bloqueadas automáticamente mientras dure la sesión!</span>
+                                    <span>¡Pantalla bloqueada hasta que termine el tiempo! No podrás salir de esta
+                                        pantalla.</span>
                                 </div>
                             </div>
 
@@ -496,7 +526,8 @@
                                 </div>
                                 <div class="mood-insight">
                                     <i data-lucide="sparkles"></i>
-                                    <span>¡Has tenido un 80% de bienestar esta semana! La disciplina te sienta bien.</span>
+                                    <span>¡Has tenido un 80% de bienestar esta semana! La disciplina te sienta
+                                        bien.</span>
                                 </div>
                             </div>
                         </div>
@@ -531,9 +562,14 @@
                                 <div class="chart-placeholder" id="dist-chart">
                                     <!-- Render de un gráfico SVG estético -->
                                     <svg viewBox="0 0 200 200" style="width: 180px;">
-                                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="var(--primary-blue)" stroke-width="40" stroke-dasharray="502" stroke-dashoffset="150"></circle>
-                                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="var(--primary-purple)" stroke-width="40" stroke-dasharray="502" stroke-dashoffset="350"></circle>
-                                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="var(--primary-green)" stroke-width="40" stroke-dasharray="502" stroke-dashoffset="450"></circle>
+                                        <circle cx="100" cy="100" r="80" fill="transparent" stroke="var(--primary-blue)"
+                                            stroke-width="40" stroke-dasharray="502" stroke-dashoffset="150"></circle>
+                                        <circle cx="100" cy="100" r="80" fill="transparent"
+                                            stroke="var(--primary-purple)" stroke-width="40" stroke-dasharray="502"
+                                            stroke-dashoffset="350"></circle>
+                                        <circle cx="100" cy="100" r="80" fill="transparent"
+                                            stroke="var(--primary-green)" stroke-width="40" stroke-dasharray="502"
+                                            stroke-dashoffset="450"></circle>
                                     </svg>
                                     <div class="chart-legends-vertical">
                                         <span class="leg blue">Clases (60%)</span>
@@ -544,11 +580,20 @@
                             </div>
                             <div class="chart-box">
                                 <h3>Estadísticas Semanales Históricas</h3>
-                                <div class="weekly-history-lines" style="height: 180px; display: flex; align-items: flex-end; gap: 15px; border-bottom: 2px solid var(--border-color); border-left: 2px solid var(--border-color); padding: 10px;">
-                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 40%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S1</div>
-                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 62%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S2</div>
-                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 78%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S3</div>
-                                    <div style="flex: 1; background: linear-gradient(to top, var(--primary-blue), var(--glow-blue)); height: 85%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">S4</div>
+                                <div class="weekly-history-lines"
+                                    style="height: 180px; display: flex; align-items: flex-end; gap: 15px; border-bottom: 2px solid var(--border-color); border-left: 2px solid var(--border-color); padding: 10px;">
+                                    <div
+                                        style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 40%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">
+                                        S1</div>
+                                    <div
+                                        style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 62%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">
+                                        S2</div>
+                                    <div
+                                        style="flex: 1; background: linear-gradient(to top, var(--primary-blue), transparent); height: 78%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">
+                                        S3</div>
+                                    <div
+                                        style="flex: 1; background: linear-gradient(to top, var(--primary-blue), var(--glow-blue)); height: 85%; border-radius: 4px 4px 0 0; text-align: center; color: white; font-size: 10px; padding-top: 5px;">
+                                        S4</div>
                                 </div>
                             </div>
                         </div>
@@ -559,14 +604,15 @@
                 <section id="tab-ajustes" class="tab-panel">
                     <div class="ajustes-layout">
                         <h2>Configuración y Vinculación Híbrida</h2>
-                        
+
                         <div class="ajustes-sections">
                             <!-- Sección: Sincronización Física -->
                             <div class="ajustes-card">
                                 <div class="card-icon blue"><i data-lucide="printer"></i></div>
                                 <div class="card-desc">
                                     <h3>Mi Agenda Física</h3>
-                                    <p>Genera y descarga hojas de planificador estéticas en PDF, optimizadas para imprimir en tamaño A5 o Carta e insertarlas en tu libreta.</p>
+                                    <p>Genera y descarga hojas de planificador estéticas en PDF, optimizadas para
+                                        imprimir en tamaño A5 o Carta e insertarlas en tu libreta.</p>
                                 </div>
                                 <button class="btn-primary" id="btn-export-pdf-planner">
                                     <i data-lucide="download"></i> Descargar Planificador Físico
@@ -578,7 +624,8 @@
                                 <div class="card-icon purple"><i data-lucide="key"></i></div>
                                 <div class="card-desc">
                                     <h3>Integraciones de Google</h3>
-                                    <p>Sincronización activa con Google Calendar. Puedes revocar el acceso o configurar alarmas personalizadas.</p>
+                                    <p>Sincronización activa con Google Calendar. Puedes revocar el acceso o configurar
+                                        alarmas personalizadas.</p>
                                 </div>
                                 <button class="btn-secondary" id="btn-unlink-google-auth">Desvincular Google</button>
                             </div>
@@ -588,7 +635,8 @@
                                 <div class="card-icon red"><i data-lucide="trash-2"></i></div>
                                 <div class="card-desc">
                                     <h3>Reiniciar Datos</h3>
-                                    <p>Borrara toda la información local de tus tareas, hábitos e historial de bienestar.</p>
+                                    <p>Borrara toda la información local de tus tareas, hábitos e historial de
+                                        bienestar.</p>
                                 </div>
                                 <button class="btn-danger" id="btn-reset-data">Borrar todo</button>
                             </div>
@@ -636,9 +684,15 @@
                     </select>
                 </div>
             </div>
-            <div class="input-group">
-                <label for="task-date">Fecha de Entrega</label>
-                <input type="date" id="task-date" required>
+            <div class="modal-row-grid">
+                <div class="input-group">
+                    <label for="task-date">Fecha de Entrega</label>
+                    <input type="date" id="task-date" required>
+                </div>
+                <div class="input-group">
+                    <label for="task-time">Hora de la Tarea</label>
+                    <input type="time" id="task-time" value="09:00" required>
+                </div>
             </div>
             <button class="btn-primary full-width" id="btn-save-task">
                 <span>Guardar Tarea</span>
@@ -688,6 +742,23 @@
     <div id="toast-message" class="toast-popup">
         <i data-lucide="check-circle" class="toast-icon"></i>
         <span id="toast-text">Acción realizada correctamente</span>
+    </div>
+
+    <!-- PANTALLA DE BLOQUEO DE DISTRACTORES (FULLSCREEN) -->
+    <div id="distraction-lock-screen" class="distraction-lock-screen" style="display: none;">
+        <div class="lock-screen-content">
+            <div class="lock-timer-display" id="lock-timer">25:00</div>
+            <h2>Modo Concentración Activado</h2>
+            <p>Enfócate en tu tarea. Esta pantalla se desbloqueará cuando termine el tiempo.</p>
+            <div class="lock-encouragement">
+                <i data-lucide="target" class="lock-icon"></i>
+                <span id="lock-message">¡Tú puedes! Mantén el enfoque.</span>
+            </div>
+            <div class="lock-progress-bar">
+                <div class="lock-progress-fill" id="lock-progress"></div>
+            </div>
+            <button id="btn-emergency-exit" class="btn-emergency">Salida de Emergencia</button>
+        </div>
     </div>
 
     <!-- BARRA DE NAVEGACIÓN INFERIOR MÓVIL -->

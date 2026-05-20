@@ -1,0 +1,11 @@
+{
+  "name": "joseph",
+  "version": "1.0.0",
+  "description": "Student Balance Planner web app",
+  "main": "main.js",
+  "scripts": {
+    "dev": "npx serve -l 3000"
+  },
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(c:\\Users\\juanp\\.gemini\\antigravity\\scratch\\deviathon/**)",
+      "Bash(npm run *)"
+    ]
+  },
+  "$version": 4
+}

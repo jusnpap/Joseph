@@ -18,12 +18,17 @@ let appState = {
         moodHistory: [50, 50, 50, 50, 50, 50, 50] // Lun a Dom neutral
     },
     notifications: [],
-    activePhoneFilter: null
+    activePhoneFilter: null,
+    notificationPermission: "default"
 };
 
 // Variable para el control del mes/semana actual a mostrar en el calendario
-// Por defecto se mostrará Julio 2026 para alinear con el diseño base de pruebas.
-let currentCalendarDate = new Date(2026, 6, 6); // 6 de Julio de 2026 (Lunes)
+// Se inicializa con la fecha actual del sistema para mostrar la semana real.
+let currentCalendarDate = new Date();
+
+// Interval IDs for scheduled notifications
+let notificationCheckInterval = null;
+let tomorrowReminderShown = false;
 
 
 // ==========================================================================
@@ -33,7 +38,7 @@ let currentCalendarDate = new Date(2026, 6, 6); // 6 de Julio de 2026 (Lunes)
 document.addEventListener("DOMContentLoaded", () => {
     // Inicializar el sistema de autenticación
     initAuth(onUserSuccess, onUserLoggedOut);
-    
+
     // Configurar Lucide Icons
     if (window.lucide) {
         window.lucide.createIcons();
@@ -88,23 +93,23 @@ async function setupDashboard(user) {
 function animateDashboardEntry() {
     // Timeline para la entrada progresiva del Dashboard (Staggering premium)
     const tl = gsap.timeline();
-    
+
     // Animar Sidebar
-    tl.fromTo(".sidebar", 
-        { x: -50, opacity: 0 }, 
+    tl.fromTo(".sidebar",
+        { x: -50, opacity: 0 },
         { x: 0, opacity: 1, duration: 0.6, ease: "power3.out", clearProps: "all" }
     );
-    
+
     // Animar Header
-    tl.fromTo(".app-header", 
-        { y: -30, opacity: 0 }, 
+    tl.fromTo(".app-header",
+        { y: -30, opacity: 0 },
         { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.2)", clearProps: "all" },
         "-=0.4"
     );
-    
+
     // Animar Widgets del Dashboard Activo
-    tl.fromTo(".tab-panel.active .widget-card, .tab-panel.active .well-box, .tab-panel.active .ajustes-card", 
-        { y: 30, opacity: 0, scale: 0.95 }, 
+    tl.fromTo(".tab-panel.active .widget-card, .tab-panel.active .well-box, .tab-panel.active .ajustes-card",
+        { y: 30, opacity: 0, scale: 0.95 },
         { y: 0, opacity: 1, scale: 1, duration: 0.6, stagger: 0.1, ease: "back.out(1.1)", clearProps: "all" },
         "-=0.3"
     );
@@ -128,11 +133,11 @@ function onUserLoggedOut() {
                     // Limpiar los estilos inline de GSAP para no contaminar el siguiente login
                     gsap.set(appScreen, { clearProps: "all" });
                     appScreen.style.display = "none";
-                    
+
                     authScreen.classList.add("active");
                     // Limpiar propiedades y forzar visibilidad para evitar pantalla blanca
-                    gsap.fromTo(".auth-card", 
-                        { scale: 0.9, opacity: 0, y: 0 }, 
+                    gsap.fromTo(".auth-card",
+                        { scale: 0.9, opacity: 0, y: 0 },
                         { scale: 1, opacity: 1, duration: 0.5, clearProps: "all" }
                     );
                     gsap.fromTo(".input-group, .btn-primary, .divider, .google-auth-wrapper, .auth-switch",
@@ -171,7 +176,7 @@ async function loadUserDataFromStorage(userId) {
 // Guardar datos en Cloudflare KV Backend
 async function saveStateToStorage() {
     if (!currentUser) return;
-    
+
     // Fallback local por si acaso
     localStorage.setItem(`sb_state_${currentUser.id}`, JSON.stringify(appState));
 
@@ -219,6 +224,7 @@ function initDashboardControllers() {
     setupSyncGoogle();
     setupPDFPlannerSync();
     setupNotificationCenter();
+    setupNotificationScheduler();
     setupMobileMockupInteractivity();
     setupAjustesActions();
 }
@@ -277,7 +283,7 @@ function renderAll() {
     renderHabitsList();
     renderPhoneMockupTasks();
     renderEstadisticas();
-    
+
     // Re-render Lucide Icons
     if (window.lucide) {
         window.lucide.createIcons();
@@ -315,7 +321,7 @@ function renderWeekCalendar() {
     if (!datesContainer) return;
 
     datesContainer.innerHTML = "";
-    
+
     // Configurar mes y año en el título
     const options = { month: 'long', year: 'numeric' };
     if (calendarMonthYear) {
@@ -344,9 +350,9 @@ function renderWeekCalendar() {
         const span = document.createElement("span");
         span.className = `date-num ${isToday ? 'today' : ''} ${hasEvents ? 'highlighted yellow' : ''}`;
         span.textContent = dayNum;
-        
+
         span.addEventListener("click", () => {
-            showToast(`Día ${dayNum} seleccionado. ${hasEvents ? eventsToday.map(e=>e.title).join(', ') : 'Sin eventos'}.`, "info");
+            showToast(`Día ${dayNum} seleccionado. ${hasEvents ? eventsToday.map(e => e.title).join(', ') : 'Sin eventos'}.`, "info");
         });
 
         datesContainer.appendChild(span);
@@ -393,7 +399,7 @@ function renderFullCalendarBoard() {
     if (!board) return;
 
     board.innerHTML = "";
-    
+
     if (fullCalendarTitle) {
         fullCalendarTitle.textContent = currentCalendarDate.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
     }
@@ -411,7 +417,7 @@ function renderFullCalendarBoard() {
     const month = currentCalendarDate.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
-    
+
     const startOffset = firstDayOfMonth.getDay() === 0 ? 6 : firstDayOfMonth.getDay() - 1;
     const totalDays = lastDayOfMonth.getDate();
     const todayStr = new Date().toISOString().split('T')[0];
@@ -427,11 +433,11 @@ function renderFullCalendarBoard() {
         // Ajustar la fecha considerando la zona horaria para ISO string
         currentDate.setMinutes(currentDate.getMinutes() - currentDate.getTimezoneOffset());
         const dateStr = currentDate.toISOString().split('T')[0];
-        
+
         const isToday = dateStr === todayStr;
         const cell = document.createElement("div");
         cell.className = `cal-cell ${isToday ? 'today' : ''}`;
-        
+
         const dayNumSpan = document.createElement("span");
         dayNumSpan.className = "cell-num";
         dayNumSpan.textContent = day;
@@ -467,7 +473,7 @@ function renderFullCalendarBoard() {
 function renderProgresoSemanal() {
     const progressCircle = document.getElementById("weekly-progress-circle");
     const percentageText = document.getElementById("weekly-progress-percentage");
-    
+
     if (!progressCircle || !percentageText) return;
 
     // Calcular progreso
@@ -487,7 +493,7 @@ function renderProgresoSemanal() {
     // Dasharray original es 251.2 (2 * PI * radio 40)
     const circumference = 251.2;
     const offset = circumference - (finalPercentage / 100) * circumference;
-    
+
     progressCircle.style.strokeDashoffset = offset;
     percentageText.textContent = `${finalPercentage}%`;
 
@@ -552,6 +558,7 @@ function setupTaskManager() {
             const category = document.getElementById("task-category").value;
             const priority = document.getElementById("task-priority").value;
             const date = document.getElementById("task-date").value;
+            const time = document.getElementById("task-time").value;
 
             if (!title || !date) {
                 showToast("Por favor, rellena el título y la fecha.", "error");
@@ -565,17 +572,19 @@ function setupTaskManager() {
                 category,
                 priority,
                 status: "pending",
-                dueDate: date
+                dueDate: date,
+                time: time || "09:00"
             };
 
             appState.tasks.push(newTask);
             saveStateToStorage();
             toggleModal(false);
-            
+
             // Limpiar inputs
             document.getElementById("task-title").value = "";
             document.getElementById("task-desc").value = "";
             document.getElementById("task-date").value = "";
+            document.getElementById("task-time").value = "09:00";
 
             renderAll();
             showToast("Nueva tarea añadida correctamente.");
@@ -650,10 +659,10 @@ function setupEventManager() {
             appState.events.push(newEvent);
             saveStateToStorage();
             toggleEventModal(false);
-            
+
             // Re-render calendarios para reflejar el nuevo evento
             renderWeekCalendar();
-            
+
             showToast("Evento agregado al calendario.", "success");
         });
     }
@@ -684,7 +693,7 @@ function renderTasksKanban(query = "") {
         const card = document.createElement("div");
         card.className = "task-card";
         card.draggable = true;
-        
+
         card.innerHTML = `
             <div class="task-card-header">
                 <span class="task-cat">${t.category}</span>
@@ -693,7 +702,7 @@ function renderTasksKanban(query = "") {
             <h4>${t.title}</h4>
             <p>${t.desc || 'Sin descripción'}</p>
             <div class="task-card-footer">
-                <span class="task-due"><i data-lucide="calendar"></i> ${t.dueDate}</span>
+                <span class="task-due"><i data-lucide="calendar"></i> ${t.dueDate} • <i data-lucide="clock"></i> ${t.time || '09:00'}</span>
                 <div class="task-actions-row">
                     ${t.status !== 'completed' ? `<button class="task-action-btn check-btn" data-action="complete" data-id="${t.id}" title="Completar"><i data-lucide="check"></i></button>` : ''}
                     ${t.status === 'pending' ? `<button class="task-action-btn" style="color:var(--primary-orange)" data-action="progress" data-id="${t.id}" title="Comenzar"><i data-lucide="play"></i></button>` : ''}
@@ -761,7 +770,7 @@ function setupKanbanDropZones(columns) {
             e.preventDefault();
             col.classList.add("drag-over");
         });
-        
+
         col.addEventListener("dragleave", () => {
             col.classList.remove("drag-over");
         });
@@ -769,10 +778,10 @@ function setupKanbanDropZones(columns) {
         col.addEventListener("drop", (e) => {
             e.preventDefault();
             col.classList.remove("drag-over");
-            
+
             const taskId = e.dataTransfer.getData("text/plain");
             const newStatus = col.id === "list-pending" ? "pending" : (col.id === "list-progress" ? "progress" : "completed");
-            
+
             const taskIndex = appState.tasks.findIndex(t => t.id === taskId);
             if (taskIndex !== -1 && appState.tasks[taskIndex].status !== newStatus) {
                 appState.tasks[taskIndex].status = newStatus;
@@ -820,7 +829,7 @@ function renderHabitsList() {
     appState.habits.forEach(h => {
         const card = document.createElement("div");
         card.className = "habit-card";
-        
+
         // Generar burbujas de historial de la semana
         let historyBubbles = "";
         const daysLabel = ["L", "M", "M", "J", "V"];
@@ -883,10 +892,10 @@ function setupWellbeingTools() {
         btn.addEventListener("click", () => {
             moodBtns.forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
-            
+
             const mood = btn.getAttribute("data-mood");
             appState.wellness.currentMood = mood;
-            
+
             // Actualizar frase de motivación dinámicamente según estado
             updateQuoteAccordingToMood(mood);
             saveStateToStorage();
@@ -940,64 +949,213 @@ function setupWellbeingTools() {
         });
     }
 
-    // 2. Temporizador de Enfoque Pomodoro
+    // 2. Temporizador de Enfoque Pomodoro con Pantalla de Bloqueo
     const btnPomodoroStart = document.getElementById("btn-pomodoro-start");
     const btnPomodoroReset = document.getElementById("btn-pomodoro-reset");
     const pomodoroDisplay = document.getElementById("pomodoro-display");
+    const pomodoroDurationSelect = document.getElementById("pomodoro-duration");
 
     let pomodoroInterval = null;
-    let pomodoroTimeLeft = 25 * 60; // 25 min
+    let pomodoroTimeLeft = 25 * 60; // 25 min por defecto
+    let pomodoroTotalTime = 25 * 60;
+    let lockScreenActive = false;
+
+    // Elementos de la pantalla de bloqueo
+    const lockScreen = document.getElementById("distraction-lock-screen");
+    const lockTimer = document.getElementById("lock-timer");
+    const lockProgress = document.getElementById("lock-progress");
+    const lockMessage = document.getElementById("lock-message");
+    const btnEmergencyExit = document.getElementById("btn-emergency-exit");
+
+    // Actualizar timer cuando se cambia la duración
+    if (pomodoroDurationSelect) {
+        pomodoroDurationSelect.addEventListener("change", () => {
+            if (!pomodoroInterval && !lockScreenActive) {
+                const minutes = parseInt(pomodoroDurationSelect.value);
+                pomodoroTimeLeft = minutes * 60;
+                pomodoroTotalTime = minutes * 60;
+                pomodoroDisplay.textContent = `${String(Math.floor(pomodoroTimeLeft / 60)).padStart(2, '0')}:${String(pomodoroTimeLeft % 60).padStart(2, '0')}`;
+            }
+        });
+    }
+
+    function updateTimerDisplay() {
+        const minutes = Math.floor(pomodoroTimeLeft / 60);
+        const seconds = pomodoroTimeLeft % 60;
+        const timeStr = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+        if (pomodoroDisplay) pomodoroDisplay.textContent = timeStr;
+        if (lockTimer) lockTimer.textContent = timeStr;
+    }
+
+    function updateLockProgress() {
+        if (!lockProgress) return;
+        const elapsed = pomodoroTotalTime - pomodoroTimeLeft;
+        const percentage = (elapsed / pomodoroTotalTime) * 100;
+        lockProgress.style.width = `${percentage}%`;
+    }
+
+    function showLockScreen() {
+        if (!lockScreen) return;
+        lockScreen.style.display = "flex";
+        lockScreenActive = true;
+
+        // Request fullscreen for better immersion
+        if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => { });
+        }
+
+        // Mensajes aleatorios de motivación
+        const messages = [
+            "¡Tú puedes! Mantén el enfoque.",
+            "Cada minuto cuenta. ¡Sigue así!",
+            "La disciplina de hoy es tu éxito de mañana.",
+            "Respira y continúa. Estás haciendo un gran trabajo.",
+            "¡Enfocado! Tu yo futuro te lo agradecerá."
+        ];
+        if (lockMessage) {
+            lockMessage.textContent = messages[Math.floor(Math.random() * messages.length)];
+        }
+    }
+
+    function hideLockScreen() {
+        if (!lockScreen) return;
+        lockScreen.style.display = "none";
+        lockScreenActive = false;
+
+        // Exit fullscreen
+        if (document.fullscreenElement) {
+            document.exitFullscreen().catch(() => { });
+        }
+    }
+
+    function startPomodoro() {
+        // Obtener duración seleccionada
+        const selectedMinutes = pomodoroDurationSelect ? parseInt(pomodoroDurationSelect.value) : 25;
+        pomodoroTotalTime = selectedMinutes * 60;
+        pomodoroTimeLeft = pomodoroTotalTime;
+
+        pomodoroInterval = setInterval(() => {
+            pomodoroTimeLeft--;
+            updateTimerDisplay();
+            updateLockProgress();
+
+            if (pomodoroTimeLeft <= 0) {
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+
+                // Reproducir sonido de finalización
+                playNotificationSound();
+
+                hideLockScreen();
+
+                // Resetear a la duración seleccionada
+                pomodoroTimeLeft = pomodoroTotalTime;
+                updateTimerDisplay();
+                if (lockProgress) lockProgress.style.width = "0%";
+
+                btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+                if (window.lucide) window.lucide.createIcons();
+
+                // Registrar hora de estudio
+                const hours = selectedMinutes / 60;
+                appState.wellness.studyHoursThisWeek += hours;
+                saveStateToStorage();
+                renderAll();
+
+                sendNotification(
+                    "¡Sesión completada!",
+                    `Excelente trabajo. Completaste ${selectedMinutes} minutos de concentración.`,
+                    "success"
+                );
+                showToast(`¡Excelente sesión de concentración! ${selectedMinutes} min añadidos al estudio.`, "success");
+            }
+        }, 1000);
+
+        // Mostrar pantalla de bloqueo inmediatamente
+        showLockScreen();
+        updateTimerDisplay();
+
+        btnPomodoroStart.innerHTML = `<i data-lucide="pause"></i> Pausar`;
+        if (window.lucide) window.lucide.createIcons();
+
+        showToast("Pantalla de concentración activada. ¡Enfócate!", "info");
+    }
 
     if (btnPomodoroStart && btnPomodoroReset && pomodoroDisplay) {
         btnPomodoroStart.addEventListener("click", () => {
             if (pomodoroInterval) {
-                // Pausar
+                // Pausar - pero mantener lock screen si está activo
                 clearInterval(pomodoroInterval);
                 pomodoroInterval = null;
-                btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+                btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Reanudar`;
                 if (window.lucide) window.lucide.createIcons();
                 showToast("Temporizador pausado.", "info");
                 return;
             }
 
-            // Empezar Pomodoro
-            btnPomodoroStart.innerHTML = `<i data-lucide="pause"></i> Pausar`;
-            if (window.lucide) window.lucide.createIcons();
+            // Iniciar o reanudar
+            if (pomodoroTimeLeft === pomodoroTotalTime || pomodoroTimeLeft === 25 * 60) {
+                // Inicio nuevo
+                startPomodoro();
+            } else {
+                // Reanudar
+                pomodoroInterval = setInterval(() => {
+                    pomodoroTimeLeft--;
+                    updateTimerDisplay();
+                    updateLockProgress();
 
-            pomodoroInterval = setInterval(() => {
-                pomodoroTimeLeft--;
-                
-                const minutes = Math.floor(pomodoroTimeLeft / 60);
-                const seconds = pomodoroTimeLeft % 60;
-                pomodoroDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    if (pomodoroTimeLeft <= 0) {
+                        clearInterval(pomodoroInterval);
+                        pomodoroInterval = null;
+                        playNotificationSound();
+                        hideLockScreen();
+                        pomodoroTimeLeft = pomodoroTotalTime;
+                        updateTimerDisplay();
+                        if (lockProgress) lockProgress.style.width = "0%";
+                        btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+                        if (window.lucide) window.lucide.createIcons();
+                        const hours = (pomodoroTotalTime / 60) / 60;
+                        appState.wellness.studyHoursThisWeek += hours;
+                        saveStateToStorage();
+                        renderAll();
+                        sendNotification("¡Sesión completada!", "Excelente trabajo. Completaste tu sesión de concentración.", "success");
+                        showToast("¡Excelente sesión de concentración!", "success");
+                    }
+                }, 1000);
 
-                if (pomodoroTimeLeft <= 0) {
-                    clearInterval(pomodoroInterval);
-                    pomodoroInterval = null;
-                    pomodoroTimeLeft = 25 * 60;
-                    pomodoroDisplay.textContent = "25:00";
-                    btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
-                    if (window.lucide) window.lucide.createIcons();
-
-                    // Registrar hora de estudio en el estado
-                    appState.wellness.studyHoursThisWeek += 0.5;
-                    saveStateToStorage();
-                    renderAll();
-                    showToast("¡Excelente sesión de concentración! 25 min añadidos al estudio.", "success");
-                }
-            }, 1000);
-
-            showToast("Distracciones y notificaciones bloqueadas. ¡Enfócate!", "info");
+                btnPomodoroStart.innerHTML = `<i data-lucide="pause"></i> Pausar`;
+                if (window.lucide) window.lucide.createIcons();
+                showLockScreen();
+            }
         });
 
         btnPomodoroReset.addEventListener("click", () => {
             clearInterval(pomodoroInterval);
             pomodoroInterval = null;
-            pomodoroTimeLeft = 25 * 60;
-            pomodoroDisplay.textContent = "25:00";
+            const selectedMinutes = pomodoroDurationSelect ? parseInt(pomodoroDurationSelect.value) : 25;
+            pomodoroTimeLeft = selectedMinutes * 60;
+            pomodoroTotalTime = pomodoroTimeLeft;
+            pomodoroDisplay.textContent = `${String(Math.floor(pomodoroTimeLeft / 60)).padStart(2, '0')}:${String(pomodoroTimeLeft % 60).padStart(2, '0')}`;
             btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
             if (window.lucide) window.lucide.createIcons();
+            hideLockScreen();
+            if (lockProgress) lockProgress.style.width = "0%";
             showToast("Pomodoro restablecido.", "info");
+        });
+    }
+
+    // Botón de emergencia para salir
+    if (btnEmergencyExit) {
+        btnEmergencyExit.addEventListener("click", () => {
+            if (confirm("¿Estás seguro de que quieres terminar la sesión de concentración? Perderás el progreso de esta sesión.")) {
+                clearInterval(pomodoroInterval);
+                pomodoroInterval = null;
+                hideLockScreen();
+                btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+                if (window.lucide) window.lucide.createIcons();
+                showToast("Sesión de concentración terminada.", "info");
+            }
         });
     }
 }
@@ -1037,7 +1195,7 @@ function setupSyncGoogle() {
                 btnSyncGoogle.disabled = false;
                 btnSyncGoogle.textContent = "Sincronizar ahora";
                 if (lastSync) lastSync.textContent = "Última sinc: Ahora mismo";
-                
+
                 showToast("¡Google Calendar sincronizado correctamente! Se importaron 2 clases.", "success");
             }, 2500);
         });
@@ -1275,7 +1433,7 @@ function generatePhysicalPlannerPDF() {
         </body>
         </html>
     `);
-    
+
     printWindow.document.close();
     showToast("¡Formato de agenda física listo para imprimir!", "success");
 }
@@ -1292,7 +1450,7 @@ function setupNotificationCenter() {
         bell.addEventListener("click", (e) => {
             e.stopPropagation();
             dropdown.classList.toggle("active");
-            
+
             // Limpiar badge
             const badge = document.getElementById("notif-badge");
             if (badge) {
@@ -1312,6 +1470,176 @@ function setupNotificationCenter() {
 }
 
 // ==========================================================================
+// NOTIFICATION SYSTEM WITH SOUND - TASK REMINDERS
+// ==========================================================================
+
+// Request notification permission
+function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        console.log("Este navegador no soporta notificaciones de escritorio");
+        return;
+    }
+
+    if (Notification.permission === "default") {
+        Notification.requestPermission().then(permission => {
+            appState.notificationPermission = permission;
+            saveStateToStorage();
+            if (permission === "granted") {
+                showToast("Notificaciones activadas. ¡Recibirás recordatorios de tus tareas!", "success");
+            }
+        });
+    } else if (Notification.permission === "granted") {
+        appState.notificationPermission = "granted";
+    }
+}
+
+// Send notification with sound
+function sendNotification(title, body, icon = "info") {
+    if (Notification.permission !== "granted") {
+        // Fallback: mostrar toast
+        showToast(`${title}: ${body}`, "info");
+        return;
+    }
+
+    // Icono según tipo
+    const icons = {
+        info: "🔔",
+        warning: "⚠️",
+        success: "✅",
+        task: "📚",
+        exam: "📝"
+    };
+
+    const notification = new Notification(`${icons[icon] || "🔔"} ${title}`, {
+        body: body,
+        icon: undefined,
+        badge: undefined,
+        requireInteraction: true,
+        tag: Date.now().toString() // Unique tag to prevent replacement
+    });
+
+    // Sonido de notificación
+    playNotificationSound();
+
+    // Auto cerrar después de 5 segundos
+    setTimeout(() => notification.close(), 5000);
+}
+
+// Play notification sound
+function playNotificationSound() {
+    // Crear un beep sonoro usando Web Audio API
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        // Configurar sonido (tono ascendente agradable)
+        oscillator.frequency.value = 800;
+        oscillator.type = "sine";
+
+        // Envolvente de volumen (fade in/out)
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+
+        // Segundo tono para hacerla más notable
+        setTimeout(() => {
+            const osc2 = audioContext.createOscillator();
+            const gain2 = audioContext.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioContext.destination);
+            osc2.frequency.value = 1000;
+            osc2.type = "sine";
+            gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc2.start();
+            osc2.stop(audioContext.currentTime + 0.5);
+        }, 150);
+    } catch (e) {
+        console.error("Error al reproducir sonido:", e);
+    }
+}
+
+// Check for tomorrow's tasks
+function checkTomorrowsTasks() {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    const tasksTomorrow = appState.tasks.filter(t => {
+        return t.dueDate === tomorrowStr && t.status !== "completed";
+    });
+
+    if (tasksTomorrow.length > 0 && !tomorrowReminderShown) {
+        const taskNames = tasksTomorrow.map(t => t.title).join(", ");
+        sendNotification(
+            "Tareas para mañana",
+            `Tienes ${tasksTomorrow.length} tarea(s) programadas para mañana: ${taskNames}`,
+            "task"
+        );
+        tomorrowReminderShown = true;
+    }
+}
+
+// Check for upcoming tasks (30 minutes before)
+function checkUpcomingTasks() {
+    const now = new Date();
+    const currentStr = now.toISOString().split('T')[0];
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    appState.tasks.forEach(t => {
+        if (t.dueDate === currentStr && t.status !== "completed" && t.time) {
+            const [hours, minutes] = t.time.split(":").map(Number);
+            const taskTime = hours * 60 + minutes;
+            const timeDiff = taskTime - currentTime;
+
+            // Notificar 30 minutos antes (entre 29 y 30 minutos antes)
+            if (timeDiff >= 29 && timeDiff <= 30) {
+                sendNotification(
+                    `Próxima tarea: ${t.title}`,
+                    `Tu tarea "${t.title}" es en 30 minutos (${t.time}). ¡Prepárate!`,
+                    "warning"
+                );
+            }
+
+            // Notificar 1 hora antes (entre 59 y 60 minutos antes)
+            if (timeDiff >= 59 && timeDiff <= 60) {
+                sendNotification(
+                    `Recordatorio: ${t.title}`,
+                    `Tu tarea "${t.title}" es en 1 hora (${t.time}).`,
+                    "info"
+                );
+            }
+        }
+    });
+}
+
+// Setup notification scheduler
+function setupNotificationScheduler() {
+    // Request permission on app load
+    requestNotificationPermission();
+
+    // Check for tomorrow's tasks immediately
+    setTimeout(() => checkTomorrowsTasks(), 2000);
+
+    // Check every minute for upcoming tasks
+    notificationCheckInterval = setInterval(() => {
+        checkUpcomingTasks();
+    }, 60000);
+
+    // Also check when tasks are added/updated
+    showToast("Sistema de notificaciones activado", "info");
+}
+
+// ==========================================================================
 // MOBILE MOCKUP INTERACTIVOS & ACTIONS (SINCRO INTEGRADA)
 // ==========================================================================
 
@@ -1327,7 +1655,7 @@ function setupMobileMockupInteractivity() {
 
     const setFilter = (type, elem) => {
         document.querySelectorAll(".summary-card").forEach(c => c.classList.remove("active-filter"));
-        
+
         if (appState.activePhoneFilter === type) {
             appState.activePhoneFilter = null;
             if (clearFilter) clearFilter.style.display = "none";
@@ -1342,7 +1670,7 @@ function setupMobileMockupInteractivity() {
     if (filterExams) filterExams.addEventListener("click", () => setFilter("exams", filterExams));
     if (filterClasses) filterClasses.addEventListener("click", () => setFilter("classes", filterClasses));
     if (filterTasks) filterTasks.addEventListener("click", () => setFilter("tasks", filterTasks));
-    
+
     if (clearFilter) {
         clearFilter.addEventListener("click", () => {
             appState.activePhoneFilter = null;
@@ -1357,14 +1685,14 @@ function renderPhoneMockupTasks() {
     const container = document.getElementById("phone-tasks-container");
     const listTitle = document.getElementById("phone-list-title");
     const phoneCountText = document.getElementById("phone-pending-tasks-count");
-    
+
     if (!container) return;
 
     container.innerHTML = "";
 
     // Filtrar tareas que se renderizarán
     let tasksToRender = appState.tasks.filter(t => t.status !== "completed");
-    
+
     // Sincronizar número de tareas pendientes
     if (phoneCountText) {
         phoneCountText.textContent = tasksToRender.length;
@@ -1385,8 +1713,8 @@ function renderPhoneMockupTasks() {
         `;
         if (window.lucide) window.lucide.createIcons();
         return;
-    } 
-    
+    }
+
     if (appState.activePhoneFilter === "classes") {
         if (listTitle) listTitle.textContent = "Clases de Hoy";
         // Clases simuladas
@@ -1419,7 +1747,7 @@ function renderPhoneMockupTasks() {
     tasksToRender.forEach(t => {
         const item = document.createElement("div");
         item.className = "phone-task-item";
-        
+
         item.innerHTML = `
             <div class="phone-check" data-id="${t.id}"></div>
             <span>${t.title}</span>
@@ -1450,7 +1778,7 @@ function setupAjustesActions() {
         btnToggleTheme.addEventListener("click", () => {
             const currentTheme = document.documentElement.getAttribute("data-theme");
             const newTheme = currentTheme === "dark" ? "light" : "dark";
-            
+
             document.documentElement.setAttribute("data-theme", newTheme);
             localStorage.setItem("sb_theme", newTheme);
 
