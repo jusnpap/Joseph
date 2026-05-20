@@ -1277,7 +1277,7 @@ function generatePhysicalPlannerPDF() {
 // ==========================================================================
 
 function setupNotificationCenter() {
-    const bell = document.getElementById("bell-icon");
+    const bell = document.querySelector(".notif-bell");
     const dropdown = document.getElementById("notif-dropdown");
 
     if (bell && dropdown) {
@@ -1290,6 +1290,11 @@ function setupNotificationCenter() {
             if (badge) {
                 badge.style.display = "none";
             }
+        });
+
+        // Prevenir cierre al hacer clic dentro del menú
+        dropdown.addEventListener("click", (e) => {
+            e.stopPropagation();
         });
 
         document.addEventListener("click", () => {
