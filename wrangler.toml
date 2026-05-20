@@ -2,7 +2,12 @@
 
 name = "student-balance-planner"
 compatibility_date = "2026-05-19"
+main = "src/index.js"
 
 # Despliegue moderno de archivos estáticos (Wrangler v3+)
 [assets]
 directory = "./"
+
+[[kv_namespaces]]
+binding = "JOSEPH_DB"
+id = "f385cd69f4b3420d9261f531913bdb2a"

@@ -58,20 +58,20 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // Callback: Usuario autenticado correctamente
-function onUserSuccess(user) {
+async function onUserSuccess(user) {
     const authScreen = document.getElementById("auth-screen");
     const appScreen = document.getElementById("app-screen");
 
     // Si GSAP está disponible, animar la salida del login y la entrada del dashboard
     if (typeof gsap !== "undefined" && authScreen.classList.contains("active")) {
         gsap.to(".auth-card", {
-            y: -50, opacity: 0, scale: 0.9, duration: 0.5, ease: "power2.in", onComplete: () => {
+            y: -50, opacity: 0, scale: 0.9, duration: 0.5, ease: "power2.in", onComplete: async () => {
                 authScreen.classList.remove("active");
                 appScreen.classList.add("active");
                 appScreen.style.display = "grid";
 
                 // Ejecutar inicialización de dashboard
-                setupDashboard(user);
+                await setupDashboard(user);
                 animateDashboardEntry();
             }
         });
@@ -80,17 +80,18 @@ function onUserSuccess(user) {
         authScreen.classList.remove("active");
         appScreen.classList.add("active");
         appScreen.style.display = "grid";
-        setupDashboard(user);
+        await setupDashboard(user);
         if (typeof gsap !== "undefined") animateDashboardEntry();
     }
 }
 
-function setupDashboard(user) {
+async function setupDashboard(user) {
     updateUserInterfaceDetails(user);
-    loadUserDataFromStorage(user.id);
+    showToast(`Cargando datos de ${user.name}...`, "info");
+    await loadUserDataFromStorage(user.id);
     initDashboardControllers();
     renderAll();
-    showToast(`¡Sesión iniciada como ${user.name}!`, "success");
+    showToast(`¡Sesión iniciada correctamente!`, "success");
 }
 
 function animateDashboardEntry() {
@@ -150,22 +151,42 @@ function onUserLoggedOut() {
     }
 }
 
-// Cargar datos desde localStorage
-function loadUserDataFromStorage(userId) {
-    const savedState = localStorage.getItem(`sb_state_${userId}`);
-    if (savedState) {
-        try {
-            appState = JSON.parse(savedState);
-        } catch (e) {
-            console.error("Error cargando estado de usuario:", e);
+// Cargar datos desde Cloudflare KV Backend
+async function loadUserDataFromStorage(userId) {
+    try {
+        const response = await fetch(`/api/state?user=${userId}`);
+        if (response.ok) {
+            const savedState = await response.json();
+            if (savedState) {
+                appState = savedState;
+            }
+        } else if (response.status === 404) {
+            console.log("Usuario nuevo, utilizando estado base.");
         }
+    } catch (e) {
+        console.error("Error cargando estado de la nube. Usando localStorage como fallback:", e);
+        const savedState = localStorage.getItem(`sb_state_${userId}`);
+        if (savedState) appState = JSON.parse(savedState);
     }
 }
 
-// Guardar datos en localStorage
-function saveStateToStorage() {
-    if (currentUser) {
-        localStorage.setItem(`sb_state_${currentUser.id}`, JSON.stringify(appState));
+// Guardar datos en Cloudflare KV Backend
+async function saveStateToStorage() {
+    if (!currentUser) return;
+    
+    // Fallback local por si acaso
+    localStorage.setItem(`sb_state_${currentUser.id}`, JSON.stringify(appState));
+
+    try {
+        await fetch(`/api/state?user=${currentUser.id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(appState)
+        });
+    } catch (e) {
+        console.error("Error guardando en la nube:", e);
     }
 }
 
