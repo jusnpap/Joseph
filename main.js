@@ -9,33 +9,16 @@
 // ==========================================================================
 
 let appState = {
-    tasks: [
-        { id: "task_1", title: "Trabajo investigación Física II", desc: "Entrega del reporte experimental del electromagnetismo", category: "Física II", priority: "Alta", status: "pending", dueDate: "2026-07-15" },
-        { id: "task_2", title: "Mapa conceptual Álgebra Lineal", desc: "Espacios vectoriales y transformaciones lineales", category: "Álgebra Lineal", priority: "Media", status: "pending", dueDate: "2026-07-10" },
-        { id: "task_3", title: "Leer capítulo 4 Programación", desc: "Estructuras de datos y punteros en C++", category: "Programación", priority: "Baja", status: "pending", dueDate: "2026-07-09" },
-        { id: "task_4", title: "Proyecto final programación", desc: "Desarrollo del backend y base de datos relacional", category: "Programación", priority: "Alta", status: "progress", dueDate: "2026-07-20" },
-        { id: "task_5", title: "Tarea preparatoria de matrices", desc: "Ejercicios de multiplicación de matrices", category: "Álgebra Lineal", priority: "Baja", status: "completed", dueDate: "2026-07-03" }
-    ],
-    habits: [
-        { id: "habit_1", title: "Tomar Agua (2L)", streak: 5, completedToday: true, history: [true, true, true, true, true] },
-        { id: "habit_2", title: "Dormir 8 Horas", streak: 3, completedToday: false, history: [true, false, true, true, false] },
-        { id: "habit_3", title: "Hacer Ejercicio (30m)", streak: 2, completedToday: true, history: [false, true, false, true, true] }
-    ],
-    events: [
-        { id: "evt_1", title: "Clase Física II", date: "2026-07-09", category: "clases", time: "09:00 AM" },
-        { id: "evt_2", title: "Trabajo grupal", date: "2026-07-09", category: "estudios", time: "04:00 PM" },
-        { id: "evt_3", title: "Examen Álgebra", date: "2026-07-15", category: "examenes", time: "10:00 AM" }
-    ],
+    tasks: [],
+    habits: [],
+    events: [],
     wellness: {
         currentMood: "feliz",
-        studyHoursThisWeek: 12.5,
-        moodHistory: [90, 70, 50, 80, 30, 85, 90] // Lun a Dom
+        studyHoursThisWeek: 0,
+        moodHistory: [50, 50, 50, 50, 50, 50, 50] // Lun a Dom neutral
     },
-    notifications: [
-        { id: "notif_1", text: "¡Clase de Matemáticas empieza en 15 min!", time: "Hace 5 min", read: false },
-        { id: "notif_2", text: "Examen de Programación próximo: 6 días", time: "Hace 1 hora", read: false }
-    ],
-    activePhoneFilter: null // "exams", "classes", "tasks"
+    notifications: [],
+    activePhoneFilter: null
 };
 
 // Variable para el control del mes/semana actual a mostrar en el calendario

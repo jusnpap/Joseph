@@ -8,6 +8,11 @@ main = "src/index.js"
 [assets]
 directory = "./"
 
+routes = [
+  { pattern = "student-balance-planner.tech", custom_domain = true }
+]
+
+
 [[kv_namespaces]]
 binding = "JOSEPH_DB"
 id = "f385cd69f4b3420d9261f531913bdb2a"
