@@ -19,16 +19,23 @@ let appState = {
     },
     notifications: [],
     activePhoneFilter: null,
-    notificationPermission: "default"
+    notificationPermission: "default",
+    soundEnabledUntil: Date.now() + 30 * 60 * 1000
 };
-
+const notificationAudio = new Audio('assets/notification.mp3');
+notificationAudio.volume = 0.6;
 // Variable para el control del mes/semana actual a mostrar en el calendario
 // Se inicializa con la fecha actual del sistema para mostrar la semana real.
 let currentCalendarDate = new Date();
 
 // Interval IDs for scheduled notifications
 let notificationCheckInterval = null;
+let eventAlertSoundInterval = null;
 let tomorrowReminderShown = false;
+
+// Track which tasks have already triggered notifications (prevents duplicates)
+let notifiedTasks = new Set(); // Format: "taskId_30min", "taskId_1hr", "taskId_tomorrow"
+
 
 
 // ==========================================================================
@@ -1473,6 +1480,20 @@ function setupNotificationCenter() {
 // NOTIFICATION SYSTEM WITH SOUND - TASK REMINDERS
 // ==========================================================================
 
+// Audio context that gets initialized on first user interaction
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resume if suspended (browser autoplay policy)
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
 // Request notification permission
 function requestNotificationPermission() {
     if (!("Notification" in window)) {
@@ -1495,13 +1516,13 @@ function requestNotificationPermission() {
 
 // Send notification with sound
 function sendNotification(title, body, icon = "info") {
+    // Always show toast as fallback/confirmation
+    showToast(`${title} - ${body}`, "info");
+
     if (Notification.permission !== "granted") {
-        // Fallback: mostrar toast
-        showToast(`${title}: ${body}`, "info");
         return;
     }
 
-    // Icono según tipo
     const icons = {
         info: "🔔",
         warning: "⚠️",
@@ -1512,54 +1533,78 @@ function sendNotification(title, body, icon = "info") {
 
     const notification = new Notification(`${icons[icon] || "🔔"} ${title}`, {
         body: body,
-        icon: undefined,
-        badge: undefined,
         requireInteraction: true,
-        tag: Date.now().toString() // Unique tag to prevent replacement
+        tag: `${title}_${Date.now()}`
     });
 
-    // Sonido de notificación
+    // Sound immediately
     playNotificationSound();
 
-    // Auto cerrar después de 5 segundos
-    setTimeout(() => notification.close(), 5000);
+    // Vibrate on mobile if supported
+    if (navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+    }
+
+    // Auto cerrar después de 8 segundos
+    setTimeout(() => notification.close(), 8000);
 }
 
-// Play notification sound
+// Play notification sound - LOUDER and more noticeable
 function playNotificationSound() {
-    // Crear un beep sonoro usando Web Audio API
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
 
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        // Create a 3-beep alarm pattern (more noticeable)
+        const beepTimes = [0, 0.2, 0.4]; // Three beeps
+        const beepFreqs = [880, 880, 1100]; // A5, A5, C6 - ascending
 
-        // Configurar sonido (tono ascendente agradable)
-        oscillator.frequency.value = 800;
-        oscillator.type = "sine";
+        beepTimes.forEach((time, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
 
-        // Envolvente de volumen (fade in/out)
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
 
-        oscillator.start(audioContext.currentTime);
-        oscillator.stop(audioContext.currentTime + 0.5);
+            osc.frequency.value = beepFreqs[i];
+            osc.type = "square"; // Square wave is louder
 
-        // Segundo tono para hacerla más notable
+            // Sharp attack, quick decay
+            gain.gain.setValueAtTime(0, now + time);
+            gain.gain.linearRampToValueAtTime(0.4, now + time + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + time + 0.18);
+
+            osc.start(now + time);
+            osc.stop(now + time + 0.2);
+        });
+
+        // Second set of beeps after a short pause
         setTimeout(() => {
-            const osc2 = audioContext.createOscillator();
-            const gain2 = audioContext.createGain();
-            osc2.connect(gain2);
-            gain2.connect(audioContext.destination);
-            osc2.frequency.value = 1000;
-            osc2.type = "sine";
-            gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-            osc2.start();
-            osc2.stop(audioContext.currentTime + 0.5);
-        }, 150);
+            try {
+                const ctx2 = getAudioContext();
+                const now2 = ctx2.currentTime;
+
+                const beepTimes2 = [0, 0.15, 0.3];
+                const beepFreqs2 = [1100, 1100, 1320]; // Higher pitch second round
+
+                beepTimes2.forEach((time, i) => {
+                    const osc = ctx2.createOscillator();
+                    const gain = ctx2.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx2.destination);
+                    osc.frequency.value = beepFreqs2[i];
+                    osc.type = "square";
+                    gain.gain.setValueAtTime(0, now2 + time);
+                    gain.gain.linearRampToValueAtTime(0.35, now2 + time + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now2 + time + 0.13);
+                    osc.start(now2 + time);
+                    osc.stop(now2 + time + 0.15);
+                });
+            } catch (e) {
+                console.error("Error second beep:", e);
+            }
+        }, 600);
+
     } catch (e) {
         console.error("Error al reproducir sonido:", e);
     }
@@ -1582,10 +1627,11 @@ function checkTomorrowsTasks() {
         const taskNames = tasksTomorrow.map(t => t.title).join(", ");
         sendNotification(
             "Tareas para mañana",
-            `Tienes ${tasksTomorrow.length} tarea(s) programadas para mañana: ${taskNames}`,
+            `Hola, tienes ${tasksTomorrow.length} tarea(s) para mañana: ${taskNames}. ¡Prepárate!`,
             "task"
         );
         tomorrowReminderShown = true;
+        notifiedTasks.add("tomorrow_done");
     }
 }
 
@@ -1622,6 +1668,74 @@ function checkUpcomingTasks() {
     });
 }
 
+// Check for upcoming events (30 y 40 minutes before)
+function checkUpcomingEvents() {
+    const now = new Date();
+    const currentStr = now.toISOString().split('T')[0];
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+
+    appState.events.forEach(e => {
+        if (e.date === currentStr && e.time) {
+            const [hours, minutes] = e.time.split(":").map(Number);
+            const eventTime = hours * 60 + minutes;
+            const timeDiff = eventTime - currentTime;
+
+            // Notificar 30 minutos antes (entre 29 y 30 minutos antes)
+            if (timeDiff >= 29 && timeDiff <= 30) {
+                showEventFullscreenAlert(e, 30);
+            }
+            
+            // Notificar 40 minutos antes (entre 39 y 40 minutos antes)
+            if (timeDiff >= 39 && timeDiff <= 40) {
+                showEventFullscreenAlert(e, 40);
+            }
+        }
+    });
+}
+
+function showEventFullscreenAlert(event, minLeft) {
+    const alertScreen = document.getElementById("event-alert-screen");
+    const timerDisplay = document.getElementById("event-alert-timer");
+    const messageDisplay = document.getElementById("event-alert-message");
+    
+    if (alertScreen && timerDisplay && messageDisplay) {
+        timerDisplay.textContent = `${minLeft} MIN`;
+        messageDisplay.textContent = `Faltan ${minLeft} minutos para tu evento: ${event.title}.`;
+        alertScreen.style.display = "flex";
+        
+        if (eventAlertSoundInterval) clearInterval(eventAlertSoundInterval);
+        playTinTinTinSound();
+        eventAlertSoundInterval = setInterval(playTinTinTinSound, 1500);
+    }
+}
+
+function playTinTinTinSound() {
+    try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const beepTimes = [0, 0.2, 0.4];
+        const beepFreqs = [1200, 1200, 1200]; // Tono "tin" constante
+
+        beepTimes.forEach((time, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.frequency.value = beepFreqs[i];
+            osc.type = "sine"; // Onda senoidal suena más como campana/tin
+
+            gain.gain.setValueAtTime(0, now + time);
+            gain.gain.linearRampToValueAtTime(0.5, now + time + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + time + 0.15);
+
+            osc.start(now + time);
+            osc.stop(now + time + 0.2);
+        });
+    } catch (e) {
+        console.error("Error al reproducir sonido tin tin tin:", e);
+    }
+}
+
 // Setup notification scheduler
 function setupNotificationScheduler() {
     // Request permission on app load
@@ -1630,10 +1744,24 @@ function setupNotificationScheduler() {
     // Check for tomorrow's tasks immediately
     setTimeout(() => checkTomorrowsTasks(), 2000);
 
-    // Check every minute for upcoming tasks
+    // Check every minute for upcoming tasks and events
     notificationCheckInterval = setInterval(() => {
         checkUpcomingTasks();
+        checkUpcomingEvents();
     }, 60000);
+
+    // Event listener para cerrar la alerta de eventos en pantalla completa
+    const btnCloseEventAlert = document.getElementById("btn-close-event-alert");
+    if (btnCloseEventAlert) {
+        btnCloseEventAlert.addEventListener("click", () => {
+            const alertScreen = document.getElementById("event-alert-screen");
+            if (alertScreen) alertScreen.style.display = "none";
+            if (eventAlertSoundInterval) {
+                clearInterval(eventAlertSoundInterval);
+                eventAlertSoundInterval = null;
+            }
+        });
+    }
 
     // Also check when tasks are added/updated
     showToast("Sistema de notificaciones activado", "info");

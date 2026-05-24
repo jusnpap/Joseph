@@ -329,7 +329,18 @@ function showToast(message, type = "success") {
             icon.setAttribute("data-lucide", type === "success" ? "check-circle" : (type === "error" ? "x-circle" : "info"));
             window.lucide.createIcons();
         }
-
+        
+        // Reproducir sonido si está dentro del rango de 30 minutos desde la carga
+        if (typeof appState !== "undefined" && Date.now() < (appState.soundEnabledUntil || 0)) {
+            try {
+                // notificationAudio is defined in main.js
+                if (typeof notificationAudio !== "undefined") {
+                    notificationAudio.currentTime = 0;
+                    notificationAudio.play().catch(() => {});
+                }
+            } catch (e) { console.error(e); }
+        }
+        
         toast.className = `toast-popup active ${type}`;
         
         setTimeout(() => {
