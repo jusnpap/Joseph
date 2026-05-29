@@ -332,11 +332,12 @@ function initMascotManager() {
 
     // Click on mascot forces a new quote and jump animation
     const mascotImg = container.querySelector(".mascot-image");
+    const mascotJumpWrapper = document.getElementById("mascot-jump-wrapper") || mascotImg;
     if(mascotImg) {
         mascotImg.addEventListener("click", () => {
             updateBubble();
-            mascotImg.classList.add("mascot-jump");
-            setTimeout(() => mascotImg.classList.remove("mascot-jump"), 500);
+            mascotJumpWrapper.classList.add("mascot-jump");
+            setTimeout(() => mascotJumpWrapper.classList.remove("mascot-jump"), 500);
         });
     }
 }
