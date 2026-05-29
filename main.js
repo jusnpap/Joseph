@@ -965,11 +965,11 @@ function renderTasksKanban(query = "") {
             <h4>${t.title}</h4>
             <p>${t.desc || 'Sin descripción'}</p>
             <div class="task-card-footer">
-                <span class="task-due"><i data-lucide="calendar"></i> ${t.dueDate} • <i data-lucide="clock"></i> ${t.time || '09:00'}</span>
+                <span class="task-due"><i class="ph-duotone ph-calendar"></i> ${t.dueDate} • <i class="ph-duotone ph-clock"></i> ${t.time || '09:00'}</span>
                 <div class="task-actions-row">
-                    ${t.status !== 'completed' ? `<button class="task-action-btn check-btn" data-action="complete" data-id="${t.id}" title="Completar"><i data-lucide="check"></i></button>` : ''}
-                    ${t.status === 'pending' ? `<button class="task-action-btn" style="color:var(--primary-orange)" data-action="progress" data-id="${t.id}" title="Comenzar"><i data-lucide="play"></i></button>` : ''}
-                    <button class="task-action-btn delete-btn" data-action="delete" data-id="${t.id}" title="Eliminar"><i data-lucide="trash-2"></i></button>
+                    ${t.status !== 'completed' ? `<button class="task-action-btn check-btn" data-action="complete" data-id="${t.id}" title="Completar"><i class="ph-duotone ph-check"></i></button>` : ''}
+                    ${t.status === 'pending' ? `<button class="task-action-btn" style="color:var(--primary-orange)" data-action="progress" data-id="${t.id}" title="Comenzar"><i class="ph-duotone ph-play"></i></button>` : ''}
+                    <button class="task-action-btn delete-btn" data-action="delete" data-id="${t.id}" title="Eliminar"><i class="ph-duotone ph-trash"></i></button>
                 </div>
             </div>
         `;
@@ -1110,13 +1110,13 @@ function renderHabitsList() {
         card.innerHTML = `
             <div class="habit-meta">
                 <span class="habit-title">${h.title}</span>
-                <span class="habit-streak"><i data-lucide="flame" style="width:12px;height:12px;display:inline;"></i> ${h.streak} días</span>
+                <span class="habit-streak"><i class="ph-duotone ph-flame" style="width:12px;height:12px;display:inline;"></i> ${h.streak} días</span>
             </div>
             <div class="habit-week-history">
                 ${historyBubbles}
             </div>
             <button class="habit-check-btn ${h.completedToday ? 'completed' : ''}" data-id="${h.id}">
-                <i data-lucide="${h.completedToday ? 'check-circle-2' : 'circle'}"></i>
+                <i class="ph-duotone ph-${h.completedToday ? 'check-circle-2' : 'circle'}"></i>
                 <span>${h.completedToday ? 'Completado hoy' : 'Marcar realizado'}</span>
             </button>
         `;
@@ -1326,7 +1326,7 @@ function setupWellbeingTools() {
                 updateTimerDisplay();
                 if (lockProgress) lockProgress.style.width = "0%";
 
-                btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+                btnPomodoroStart.innerHTML = `<i class="ph-duotone ph-play"></i> Concentrar`;
                 if (window.lucide) window.lucide.createIcons();
 
                 // Registrar hora de estudio
@@ -1348,7 +1348,7 @@ function setupWellbeingTools() {
         showLockScreen();
         updateTimerDisplay();
 
-        btnPomodoroStart.innerHTML = `<i data-lucide="pause"></i> Pausar`;
+        btnPomodoroStart.innerHTML = `<i class="ph-duotone ph-pause"></i> Pausar`;
         if (window.lucide) window.lucide.createIcons();
 
         showToast("Pantalla de concentración activada. ¡Enfócate!", "info");
@@ -1360,7 +1360,7 @@ function setupWellbeingTools() {
                 // Pausar - pero mantener lock screen si está activo
                 clearInterval(pomodoroInterval);
                 pomodoroInterval = null;
-                btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Reanudar`;
+                btnPomodoroStart.innerHTML = `<i class="ph-duotone ph-play"></i> Reanudar`;
                 if (window.lucide) window.lucide.createIcons();
                 showToast("Temporizador pausado.", "info");
                 return;
@@ -1385,7 +1385,7 @@ function setupWellbeingTools() {
                         pomodoroTimeLeft = pomodoroTotalTime;
                         updateTimerDisplay();
                         if (lockProgress) lockProgress.style.width = "0%";
-                        btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+                        btnPomodoroStart.innerHTML = `<i class="ph-duotone ph-play"></i> Concentrar`;
                         if (window.lucide) window.lucide.createIcons();
                         const hours = (pomodoroTotalTime / 60) / 60;
                         appState.wellness.studyHoursThisWeek += hours;
@@ -1396,7 +1396,7 @@ function setupWellbeingTools() {
                     }
                 }, 1000);
 
-                btnPomodoroStart.innerHTML = `<i data-lucide="pause"></i> Pausar`;
+                btnPomodoroStart.innerHTML = `<i class="ph-duotone ph-pause"></i> Pausar`;
                 if (window.lucide) window.lucide.createIcons();
                 showLockScreen();
             }
@@ -1409,7 +1409,7 @@ function setupWellbeingTools() {
             pomodoroTimeLeft = selectedMinutes * 60;
             pomodoroTotalTime = pomodoroTimeLeft;
             pomodoroDisplay.textContent = `${String(Math.floor(pomodoroTimeLeft / 60)).padStart(2, '0')}:${String(pomodoroTimeLeft % 60).padStart(2, '0')}`;
-            btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+            btnPomodoroStart.innerHTML = `<i class="ph-duotone ph-play"></i> Concentrar`;
             if (window.lucide) window.lucide.createIcons();
             hideLockScreen();
             if (lockProgress) lockProgress.style.width = "0%";
@@ -1424,7 +1424,7 @@ function setupWellbeingTools() {
                 clearInterval(pomodoroInterval);
                 pomodoroInterval = null;
                 hideLockScreen();
-                btnPomodoroStart.innerHTML = `<i data-lucide="play"></i> Concentrar`;
+                btnPomodoroStart.innerHTML = `<i class="ph-duotone ph-play"></i> Concentrar`;
                 if (window.lucide) window.lucide.createIcons();
                 showToast("Sesión de concentración terminada.", "info");
             }
@@ -2096,11 +2096,11 @@ function renderPhoneMockupTasks() {
         // Mostrar exámenes simulados
         container.innerHTML = `
             <div class="phone-task-item exam-highlight">
-                <i data-lucide="alert-circle" style="width:14px;color:var(--primary-red)"></i>
+                <i class="ph-duotone ph-alert-circle" style="width:14px;color:var(--primary-red)"></i>
                 <span>Álgebra Lineal (6 días)</span>
             </div>
             <div class="phone-task-item exam-highlight">
-                <i data-lucide="alert-circle" style="width:14px;color:var(--primary-red)"></i>
+                <i class="ph-duotone ph-alert-circle" style="width:14px;color:var(--primary-red)"></i>
                 <span>Física II (12 días)</span>
             </div>
         `;
@@ -2113,11 +2113,11 @@ function renderPhoneMockupTasks() {
         // Clases simuladas
         container.innerHTML = `
             <div class="phone-task-item class-highlight">
-                <i data-lucide="book-open" style="width:14px;color:var(--primary-blue)"></i>
+                <i class="ph-duotone ph-book-open" style="width:14px;color:var(--primary-blue)"></i>
                 <span>Física II (09:00 AM)</span>
             </div>
             <div class="phone-task-item class-highlight">
-                <i data-lucide="code" style="width:14px;color:var(--primary-blue)"></i>
+                <i class="ph-duotone ph-code" style="width:14px;color:var(--primary-blue)"></i>
                 <span>Programación (11:00 AM)</span>
             </div>
         `;
