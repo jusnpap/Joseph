@@ -17,8 +17,13 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- GSAP for Animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <!-- Google Identity Services (Google Sign-In) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Driver.js for Tutorial -->
+    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css"/>
 </head>
 
 <body>
@@ -619,6 +624,16 @@
                                 </button>
                             </div>
 
+                            <!-- Sección: Personalización y Tutorial -->
+                            <div class="ajustes-card">
+                                <div class="card-icon" style="color: var(--primary-color);"><i data-lucide="palette"></i></div>
+                                <div class="card-desc">
+                                    <h3>Personalización y Tutorial</h3>
+                                    <p>Cambia los colores de tu agenda (tema) o vuelve a iniciar el recorrido del tutorial interactivo.</p>
+                                </div>
+                                <button class="btn-secondary" id="btn-restart-tutorial">Cambiar Color / Ver Tutorial</button>
+                            </div>
+
                             <!-- Sección: Cuenta vinculada -->
                             <div class="ajustes-card">
                                 <div class="card-icon purple"><i data-lucide="key"></i></div>
@@ -775,6 +790,30 @@
         </div>
     </div>
 
+    <!-- MODAL DE CONFIGURACIÓN DEL TUTORIAL (TABLA DE COLORES) -->
+    <div class="modal-overlay" id="tutorial-setup-overlay" style="z-index: 10000;"></div>
+    <div class="modal-card" id="tutorial-setup-modal" style="text-align: center; max-width: 400px; z-index: 10001;">
+        <div class="tutorial-mascot-preview floating-animation" style="margin-bottom: 10px;">
+            <img src="./assets/kawaii_mascot.png" alt="Mascota" style="width: 120px; height: 120px; object-fit: contain;">
+        </div>
+        <h2 style="margin-bottom: 15px;">¡Bienvenido/a a tu Agenda!</h2>
+        <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 14px;">Elige tu paleta de colores favorita para toda la aplicación:</p>
+        
+        <div class="color-palette-options" style="display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;">
+            <button class="color-option-btn active" data-theme="theme-cosmico" style="background: linear-gradient(135deg, hsl(205, 90%, 55%), hsl(280, 75%, 60%));" title="Cósmico (Celeste y Morado)"></button>
+            <button class="color-option-btn" data-theme="theme-amanecer" style="background: linear-gradient(135deg, hsl(25, 95%, 55%), hsl(355, 80%, 55%));" title="Amanecer (Naranja y Rojo)"></button>
+            <button class="color-option-btn" data-theme="theme-bosque" style="background: linear-gradient(135deg, hsl(145, 75%, 45%), hsl(205, 90%, 55%));" title="Bosque (Verde y Azul)"></button>
+        </div>
+        
+        <button class="btn-primary full-width" id="btn-start-tutorial">
+            <span>Comenzar Recorrido</span>
+            <i data-lucide="play"></i>
+        </button>
+        <button id="btn-skip-tutorial" style="margin-top: 15px; background: transparent; border: none; color: var(--text-muted); text-decoration: underline; cursor: pointer; font-size: 13px;">
+            Saltar tutorial (Aplicar tema)
+        </button>
+    </div>
+
     <!-- BARRA DE NAVEGACIÓN INFERIOR MÓVIL -->
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav" style="display:none;">
         <a href="#" class="mobile-nav-item active" data-tab="inicio" id="mnav-inicio">
@@ -802,6 +841,14 @@
             <span>Ajustes</span>
         </a>
     </nav>
+
+    <!-- PERSISTENT ANIME MASCOT -->
+    <div id="persistent-mascot-container" class="persistent-mascot">
+        <div class="mascot-speech-bubble" id="mascot-speech-bubble">
+            ¡Hola! Estoy aquí para ayudarte a organizar tu día. 😊
+        </div>
+        <img src="./assets/kawaii_mascot.png" alt="Mascota Kawaii" class="mascot-image walking-animation">
+    </div>
 
     <!-- JS Scripts -->
     <script src="./auth.js"></script>

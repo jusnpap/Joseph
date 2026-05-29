@@ -20,7 +20,9 @@ let appState = {
     notifications: [],
     activePhoneFilter: null,
     notificationPermission: "default",
-    soundEnabledUntil: Date.now() + 30 * 60 * 1000
+    soundEnabledUntil: Date.now() + 30 * 60 * 1000,
+    tutorialCompleted: false,
+    appTheme: "theme-cosmico"
 };
 const notificationAudio = new Audio('assets/notification.mp3');
 notificationAudio.volume = 0.6;
@@ -94,7 +96,249 @@ async function setupDashboard(user) {
     await loadUserDataFromStorage(user.id);
     initDashboardControllers();
     renderAll();
-    showToast(`¡Sesión iniciada correctamente!`, "success");
+    
+    // Aplicar el tema global
+    document.body.className = appState.appTheme || "theme-cosmico";
+
+    // Inicializar Mascot Manager
+    initMascotManager();
+
+    // Check for tutorial
+    if (!appState.tutorialCompleted) {
+        showTutorialSetupModal();
+    } else {
+        showToast(`¡Sesión iniciada correctamente!`, "success");
+    }
+}
+
+// ==========================================================================
+// TUTORIAL ONBOARDING (DRIVER.JS)
+// ==========================================================================
+
+function showTutorialSetupModal() {
+    const modal = document.getElementById("tutorial-setup-modal");
+    const overlay = document.getElementById("tutorial-setup-overlay");
+    const mascot = document.getElementById("tutorial-setup-mascot");
+    const btnStart = document.getElementById("btn-start-tutorial");
+    const btnSkip = document.getElementById("btn-skip-tutorial");
+    const colorBtns = document.querySelectorAll(".color-option-btn");
+
+    if(!modal || !overlay) return;
+
+    let selectedTheme = "theme-cosmico";
+
+    modal.classList.add("active");
+    overlay.classList.add("active");
+
+    colorBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            colorBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            selectedTheme = btn.getAttribute("data-theme");
+            // Preview real-time
+            document.body.className = selectedTheme;
+        });
+    });
+
+    const closeSetup = () => {
+        modal.classList.remove("active");
+        overlay.classList.remove("active");
+    };
+
+    btnStart.onclick = () => {
+        closeSetup();
+        appState.appTheme = selectedTheme;
+        saveStateToStorage();
+        startInteractiveTutorial(selectedTheme);
+    };
+
+    btnSkip.onclick = () => {
+        closeSetup();
+        appState.appTheme = selectedTheme;
+        appState.tutorialCompleted = true;
+        saveStateToStorage();
+        document.body.className = selectedTheme;
+        showToast("Tema aplicado. ¡Puedes empezar a usar tu agenda!");
+    };
+}
+
+function startInteractiveTutorial(themeClass) {
+    // Forzar ir a la pestaña inicio para que los widgets sean visibles
+    const inicioTab = document.querySelector('.nav-link[data-tab="inicio"]');
+    if (inicioTab) inicioTab.click();
+
+    if (typeof window.driver === 'undefined') {
+        console.error("Driver.js no está cargado.");
+        return;
+    }
+
+    const driver = window.driver.js.driver;
+
+    const tour = driver({
+        showProgress: true,
+        animate: true,
+        allowClose: false,
+        doneBtnText: '¡Terminar!',
+        nextBtnText: 'Siguiente &rarr;',
+        prevBtnText: '&larr; Anterior',
+        popoverClass: themeClass,
+        onHighlightStarted: (element, step, options) => {
+            // Añadir la mascota anime flotante al popover
+            setTimeout(() => {
+                const popovers = document.querySelectorAll('.driver-popover');
+                popovers.forEach(pop => {
+                    if (!pop.querySelector('.tutorial-mascot-overlay')) {
+                        const mascotDiv = document.createElement('div');
+                        mascotDiv.className = 'tutorial-mascot-overlay';
+                        const mascotImg = document.createElement('img');
+                        mascotImg.src = './assets/kawaii_mascot.png';
+                        mascotDiv.appendChild(mascotImg);
+                        pop.appendChild(mascotDiv);
+                    }
+                });
+            }, 50);
+        },
+        onDestroyed: () => {
+            appState.tutorialCompleted = true;
+            saveStateToStorage();
+            showToast("¡Tutorial completado! Disfruta tu agenda.", "success");
+        },
+        steps: [
+            {
+                element: '.sidebar-brand',
+                popover: {
+                    title: '¡Hola! Soy tu asistente.',
+                    description: 'Te guiaré por las funciones principales de tu nueva agenda estudiantil. ¡Vamos allá!',
+                    side: "right", align: 'start'
+                }
+            },
+            {
+                element: '.widget-semana',
+                popover: {
+                    title: 'Vista de tu Semana',
+                    description: 'Aquí puedes ver rápidamente los días de tu semana actual. Los días marcados tienen eventos importantes como exámenes o clases.',
+                    side: "left", align: 'start'
+                }
+            },
+            {
+                element: '.widget-progreso',
+                popover: {
+                    title: 'Mide tu Progreso',
+                    description: 'Este anillo te muestra tu nivel de bienestar general, calculado en base a tus tareas completadas, horas de estudio y hábitos.',
+                    side: "bottom", align: 'start'
+                }
+            },
+            {
+                element: '.widget-bienestar',
+                popover: {
+                    title: 'Autocuidado Diario',
+                    description: '¡No olvides registrar cómo te sientes! Además te mostramos una frase motivacional diaria y cuenta regresiva a exámenes.',
+                    side: "left", align: 'start'
+                }
+            },
+            {
+                element: '.sidebar-nav',
+                popover: {
+                    title: 'Navegación Principal',
+                    description: 'Desde aquí puedes acceder al Calendario completo, organizar Tareas, registrar Hábitos y ver tus Estadísticas de productividad.',
+                    side: "right", align: 'center'
+                }
+            },
+            {
+                element: '.theme-toggle',
+                popover: {
+                    title: 'Modo Oscuro',
+                    description: '¿Prefieres estudiar de noche? Usa este botón para activar el Modo Oscuro y proteger tus ojos.',
+                    side: "bottom", align: 'end'
+                }
+            }
+        ]
+    });
+
+    tour.drive();
+}
+
+// ==========================================================================
+// MASCOT MANAGER (PERSISTENT ANIME MASCOT)
+// ==========================================================================
+function initMascotManager() {
+    const bubble = document.getElementById("mascot-speech-bubble");
+    const container = document.getElementById("persistent-mascot-container");
+    
+    if (!bubble || !container) return;
+
+    const motivationalQuotes = [
+        "¡Tú puedes con todo! ✨",
+        "Un pequeño paso cada día te lleva lejos. 🌱",
+        "¡Haz tu mejor esfuerzo hoy! 💖",
+        "No olvides tomar agua y descansar. 💧",
+        "¡Confío en ti! 🌸",
+        "La disciplina de hoy es el éxito de mañana. 🌟"
+    ];
+
+    const getContextualQuote = () => {
+        const pendingTasks = appState.tasks.filter(t => t.status === "pending").length;
+        const upcomingEvents = appState.events.length;
+
+        if (pendingTasks > 0) {
+            return `¡Tienes ${pendingTasks} tarea(s) pendiente(s)! ¡Vamos a ello! 📝`;
+        } else if (upcomingEvents > 0) {
+            return `¡Recuerda que tienes ${upcomingEvents} evento(s) programado(s)! 📅`;
+        } else if (appState.wellness && appState.wellness.currentMood === "triste") {
+            return "Parece que hoy ha sido duro. ¡Tómate un respiro! Te lo mereces. 🍵";
+        }
+        
+        return motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+    };
+
+    let typeTimeout;
+    
+    const typeWriterEffect = (text, element, speed = 40) => {
+        element.textContent = "";
+        let i = 0;
+        if (typeTimeout) clearTimeout(typeTimeout);
+
+        const type = () => {
+            if (i < text.length) {
+                element.textContent += text.charAt(i);
+                i++;
+                typeTimeout = setTimeout(type, speed);
+            }
+        };
+        type();
+    };
+
+    const updateBubble = () => {
+        // Fade out
+        bubble.classList.remove("show");
+        
+        setTimeout(() => {
+            const newQuote = getContextualQuote();
+            bubble.classList.add("show");
+            typeWriterEffect(newQuote, bubble);
+            
+            // Auto hide based on text length
+            setTimeout(() => {
+                bubble.classList.remove("show");
+            }, 8000 + (newQuote.length * 40));
+        }, 500); // Wait for fade out
+    };
+
+    // Show initial quote
+    setTimeout(updateBubble, 2000);
+
+    // Rotate quotes every 30 seconds
+    setInterval(updateBubble, 30000);
+
+    // Click on mascot forces a new quote and jump animation
+    const mascotImg = container.querySelector(".mascot-image");
+    if(mascotImg) {
+        mascotImg.addEventListener("click", () => {
+            updateBubble();
+            mascotImg.classList.add("mascot-jump");
+            setTimeout(() => mascotImg.classList.remove("mascot-jump"), 500);
+        });
+    }
 }
 
 function animateDashboardEntry() {
@@ -259,6 +503,17 @@ function setupTabSwitching() {
             panel.classList.remove("active");
             if (panel.id === `tab-${tabId}`) {
                 panel.classList.add("active");
+                
+                // Efecto WOW: Animar hijos en cascada (stagger)
+                if (typeof gsap !== 'undefined') {
+                    const children = Array.from(panel.children);
+                    if(children.length > 0) {
+                        gsap.fromTo(children, 
+                            { y: 30, opacity: 0 }, 
+                            { y: 0, opacity: 1, duration: 0.5, stagger: 0.08, ease: "back.out(1.2)", clearProps: "all" }
+                        );
+                    }
+                }
             }
         });
     }
@@ -759,6 +1014,9 @@ function handleTaskAction(id, action) {
     if (action === "complete") {
         appState.tasks[taskIndex].status = "completed";
         showToast("¡Tarea completada! Tu progreso semanal aumentó.");
+        if (typeof confetti !== 'undefined') {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, zIndex: 10000 });
+        }
     } else if (action === "progress") {
         appState.tasks[taskIndex].status = "progress";
         showToast("Tarea en proceso.");
@@ -792,6 +1050,9 @@ function setupKanbanDropZones(columns) {
             const taskIndex = appState.tasks.findIndex(t => t.id === taskId);
             if (taskIndex !== -1 && appState.tasks[taskIndex].status !== newStatus) {
                 appState.tasks[taskIndex].status = newStatus;
+                if (newStatus === "completed" && typeof confetti !== 'undefined') {
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, zIndex: 10000 });
+                }
                 saveStateToStorage();
                 renderAll();
                 showToast(`Tarea movida a ${newStatus === 'pending' ? 'Pendientes' : (newStatus === 'progress' ? 'En Proceso' : 'Completadas')}`, "info");
@@ -878,6 +1139,9 @@ function toggleHabitStatus(id) {
         habit.streak += 1;
         habit.history[4] = true; // El día de hoy (viernes teórico) se marca
         showToast("¡Hábito completado! ¡No rompas tu racha!");
+        if (typeof confetti !== 'undefined') {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, zIndex: 10000 });
+        }
     } else {
         habit.streak = Math.max(0, habit.streak - 1);
         habit.history[4] = false;
@@ -1900,6 +2164,14 @@ function setupAjustesActions() {
     const btnResetData = document.getElementById("btn-reset-data");
     const btnUnlinkGoogle = document.getElementById("btn-unlink-google-auth");
     const btnLogout = document.getElementById("btn-logout");
+    const btnRestartTutorial = document.getElementById("btn-restart-tutorial");
+
+    // Reiniciar Tutorial / Cambiar Tema
+    if (btnRestartTutorial) {
+        btnRestartTutorial.addEventListener("click", () => {
+            showTutorialSetupModal();
+        });
+    }
 
     // Toggle de Tema (Claro / Oscuro)
     if (btnToggleTheme) {
