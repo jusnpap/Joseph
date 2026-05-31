@@ -1,6 +1,6 @@
 # CONFIGURACIÓN DE CLOUDFLARE PAGES - WRANGLER
 
-name = "student-balance-planner"
+name = "jopes"
 compatibility_date = "2026-05-19"
 main = "src/index.js"
 
